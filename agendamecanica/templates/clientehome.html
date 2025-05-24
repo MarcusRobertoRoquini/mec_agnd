@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Área do Cliente - AutoAgenda</title>
+</head>
+<body>
+    <h1>Bem-vindo, {{ cliente.first_name }}!</h1>
+
+    <section>
+        <h2>Perfil</h2>
+        <p>Nome: {{ cliente.get_full_name }}</p>
+        <p>Email: {{ cliente.email }}</p>
+        <p>Telefone: {{ cliente.telefone }}</p>
+    </section>
+
+    <section>
+        <h2>Meus Veículos</h2>
+        <ul>
+            {% for v in veiculos %}
+                <li>{{ v.marca }} {{ v.modelo }} ({{ v.placa }}) - <a href="#">Editar</a></li>
+            {% empty %}
+                <li>Você ainda não cadastrou veículos.</li>
+            {% endfor %}
+        </ul>
+        <a href="#">Adicionar novo veículo</a>
+    </section>
+
+    <section>
+        <h2>Histórico de Serviços</h2>
+        <ul>
+            {% for h in historico %}
+                <li>{{ h.service.nome }} - {{ h.data_realizacao }} - R$ {{ h.valor_cobrado }}</li>
+            {% empty %}
+                <li>Nenhum serviço realizado ainda.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section>
+        <h2>Orçamentos Recebidos</h2>
+        <ul>
+            {% for o in orcamentos %}
+                <li>
+                    <strong>{{ o.appointment.service.nome }}</strong> em {{ o.appointment.appointment_datetime|date:"d/m/Y" }} - 
+                    R$ {{ o.total }} ({{ o.get_status_display }})
+                    <p>{{ o.descricao }}</p>
+                </li>
+            {% empty %}
+                <li>Nenhum orçamento disponível ainda.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section>
+        <h2>Solicitar Serviço</h2>
+        <a href="#">Agendar novo serviço</a>
+    </section>
+</body>
+</html>
