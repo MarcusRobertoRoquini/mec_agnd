@@ -7,24 +7,41 @@ from django.utils import timezone
 from datetime import timedelta
 from collections import defaultdict
 from django.contrib import messages
+from django.contrib.auth import get_backends
+
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import get_backends
+from django.shortcuts import redirect, render
+from .forms import CustomUserCreationForm
 
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
+
             if user.role == 'mecanico':
-                user.aprovado = False
+                user.aprovado = False  # Mecânico precisa de aprovação manual
+
             user.save()
+
+            # Login automático após cadastro
+            backend = get_backends()[0]
+            user.backend = f"{backend.__module__}.{backend.__class__.__name__}"
             auth_login(request, user)
 
+            # Redirecionamento condicional
             if user.role == 'mecanico':
-                return redirect('cadastro_mecanico')  # Redireciona para segunda etapa de cadastro do mecanico
+                return redirect('cadastro_mecanico')  # 2ª etapa do mecânico
+            elif user.role == 'cliente':
+                return redirect('cliente_home')  # Redireciona direto para home do cliente
 
-            return redirect('login') 
+            return redirect('login')  # Fallback para outros casos
+
     else:
         form = CustomUserCreationForm()
     return render(request, 'register.html', {'form': form})
+
 
 
 
@@ -37,9 +54,9 @@ def login_view(request):
 
             # Redirecionamento com base no papel do usuário
             if user.role == 'cliente':
-                return redirect('clientehome')
+                return redirect('cliente_home')
             elif user.role == 'mecanico':
-                return redirect('mecanicohome')
+                return redirect('mecanico_home')
             else:
                 return redirect('admin:index')  # ou outra página de admin
 
@@ -67,7 +84,7 @@ def cadastro_mecanico(request):
             mechanic = form.save(commit=False)
             mechanic.user = request.user
             mechanic.save()
-            return redirect('mecanicohome')  # Finaliza o cadastro
+            return redirect('mecanico_home')  # Finaliza o cadastro
     else:
         form = MechanicForm()
 
@@ -103,7 +120,7 @@ def mecanico_home(request):
     user = request.user
 
     if user.role != 'mecanico':
-        return redirect('mecanicohome')  # segurança
+        return redirect('mecanico_home')  # segurança
 
     mechanic = user.mechanic
 
@@ -139,5 +156,8 @@ def mecanico_home(request):
         'agendamentos_semanal': dict(agendamentos_semanal),
         'historico': historico,
         'semana': semana,
+        'now': timezone.now(),
+        'hoje': hoje.strftime('%d/%m/%Y'),
+
     }
     return render(request, 'mechome.html', context)

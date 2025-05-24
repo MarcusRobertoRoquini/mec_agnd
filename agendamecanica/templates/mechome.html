@@ -1,3 +1,5 @@
+{% load custom_tags %}
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -7,13 +9,14 @@
 <body>
     <h1>Bem-vindo, {{ mecanico.user.first_name }}!</h1>
 
+    <!-- Perfil do Mecânico -->
     <section>
         <h2>Perfil</h2>
-        <p>Nome: {{ mecanico.user.get_full_name }}</p>
-        <p>Email: {{ mecanico.user.email }}</p>
-        <p>Telefone: {{ mecanico.user.telefone }}</p>
-        <p>Especialidades: {{ especialidades|join:", " }}</p>
-        <p>Horários disponíveis:</p>
+        <p><strong>Nome:</strong> {{ mecanico.user.get_full_name }}</p>
+        <p><strong>Email:</strong> {{ mecanico.user.email }}</p>
+        <p><strong>Telefone:</strong> {{ mecanico.user.telefone }}</p>
+        <p><strong>Especialidades:</strong> {{ especialidades|join:", " }}</p>
+        <p><strong>Horários disponíveis:</strong></p>
         <ul>
             {% for dia, horas in horarios.items %}
                 <li>{{ dia|title }}: {{ horas|join:", " }}</li>
@@ -21,13 +24,14 @@
         </ul>
     </section>
 
+    <!-- Agendamentos do Dia -->
     <section>
-        <h2>Agendamentos do Dia ({{ hoje|default:now|date:"d/m/Y" }})</h2>
+        <h2>Agendamentos do Dia ({{ hoje|date:"d/m/Y" }})</h2>
         <ul>
             {% for ag in agendamentos_hoje %}
                 <li>
-                    {{ ag.appointment_datetime|time:"H:i" }} - 
-                    {{ ag.client.get_full_name }} ({{ ag.vehicle.marca }} {{ ag.vehicle.modelo }}, {{ ag.vehicle.placa }}) - 
+                    {{ ag.appointment_datetime|time:"H:i" }} -
+                    {{ ag.client.get_full_name }} ({{ ag.vehicle.marca }} {{ ag.vehicle.modelo }}, {{ ag.vehicle.placa }}) -
                     Serviço: {{ ag.service.nome }}
                 </li>
             {% empty %}
@@ -36,40 +40,50 @@
         </ul>
     </section>
 
+    <!-- Agenda da Semana -->
     <section>
         <h2>Agenda da Semana</h2>
         {% for dia in semana %}
             <h3>{{ dia|date:"l - d/m" }}</h3>
             <ul>
-                {% if agendamentos_semanal.dia %}
-                    {% for ag in agendamentos_semanal.dia %}
-                        <li>{{ ag.appointment_datetime|time:"H:i" }} - {{ ag.service.nome }}</li>
-                    {% endfor %}
-                {% else %}
-                    <li>Sem agendamentos.</li>
-                {% endif %}
+                {% with agendamentos=agendamentos_semanal|dict_get:dia %}
+                    {% if agendamentos %}
+                        {% for ag in agendamentos %}
+                            <li>{{ ag.appointment_datetime|time:"H:i" }} - {{ ag.service.nome }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li>Sem agendamentos.</li>
+                    {% endif %}
+                {% endwith %}
             </ul>
         {% endfor %}
     </section>
 
+    <!-- Histórico de Serviços -->
     <section>
         <h2>Histórico de Serviços Realizados</h2>
         <ul>
             {% for s in historico %}
-                <li>{{ s.data_realizacao }} - {{ s.vehicle.placa }} - {{ s.service.nome }} - R$ {{ s.valor_cobrado }}</li>
+                <li>
+                    {{ s.data_realizacao|date:"d/m/Y" }} -
+                    {{ s.vehicle.placa }} -
+                    {{ s.service.nome }} -
+                    R$ {{ s.valor_cobrado }}
+                </li>
             {% empty %}
                 <li>Você ainda não realizou serviços registrados.</li>
             {% endfor %}
         </ul>
     </section>
 
+    <!-- Orçamentos Respondidos -->
     <section>
         <h2>Respostas de Orçamentos</h2>
         <ul>
             {% for orc in orcamentos_respondidos %}
                 <li>
-                    {{ orc.client.get_full_name }} - {{ orc.service.nome }} - 
-                    <strong>Status: {{ orc.budget.get_status_display }}</strong>
+                    {{ orc.client.get_full_name }} - {{ orc.service.nome }} -
+                    <strong>Status:</strong> {{ orc.budget.get_status_display }}
                 </li>
             {% empty %}
                 <li>Nenhum orçamento respondido ainda.</li>
