@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Veículo</title>
+</head>
+<body>
+    <header>
+        <h1>Editar Veículo</h1>
+    </header>
+
+    <main>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Salvar alterações</button>
+        </form>
+
+        <a class="back-link" href="{% url 'cliente_home' %}">← Voltar para a Área do Cliente</a>
+    </main>
+</body>
+</html>

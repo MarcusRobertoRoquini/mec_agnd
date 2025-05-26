@@ -7,6 +7,7 @@
 <body>
     <h1>Bem-vindo, {{ cliente.first_name }}!</h1>
 
+    <!-- Seção Perfil -->
     <section>
         <h2>Perfil</h2>
         <p>Nome: {{ cliente.get_full_name }}</p>
@@ -14,18 +15,23 @@
         <p>Telefone: {{ cliente.telefone }}</p>
     </section>
 
+    <!-- Seção Veículos -->
     <section>
         <h2>Meus Veículos</h2>
         <ul>
             {% for v in veiculos %}
-                <li>{{ v.marca }} {{ v.modelo }} ({{ v.placa }}) - <a href="#">Editar</a></li>
+                <li>
+                    {{ v.marca }}, {{ v.modelo }}, ({{ v.placa }}) - 
+                    <a href="{% url 'editar_veiculo' v.id %}">Editar</a>
+                </li>
             {% empty %}
                 <li>Você ainda não cadastrou veículos.</li>
             {% endfor %}
         </ul>
-        <a href="#">Adicionar novo veículo</a>
+        <a href="{% url 'adicionar_veiculo' %}">Adicionar novo veículo</a>
     </section>
 
+    <!-- Seção Histórico de Serviços -->
     <section>
         <h2>Histórico de Serviços</h2>
         <ul>
@@ -37,6 +43,7 @@
         </ul>
     </section>
 
+    <!-- Seção Orçamentos -->
     <section>
         <h2>Orçamentos Recebidos</h2>
         <ul>
@@ -52,6 +59,7 @@
         </ul>
     </section>
 
+    <!-- Seção Agendamento -->
     <section>
         <h2>Solicitar Serviço</h2>
         <a href="#">Agendar novo serviço</a>

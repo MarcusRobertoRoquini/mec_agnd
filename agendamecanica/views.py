@@ -1,6 +1,6 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login
-from .forms import CustomUserCreationForm, EmailAuthenticationForm, MechanicForm
+from .forms import CustomUserCreationForm, EmailAuthenticationForm, MechanicForm, VehicleForm
 from .models import Mechanic, Service, ServiceHistory, Budget, Appointment, Vehicle
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -161,3 +161,28 @@ def mecanico_home(request):
 
     }
     return render(request, 'mechome.html', context)
+
+@login_required
+def adicionar_veiculo(request):
+    if request.method == 'POST':
+        form = VehicleForm(request.POST)
+        if form.is_valid():
+            veiculo = form.save(commit=False)
+            veiculo.client = request.user
+            veiculo.save()
+            return redirect('cliente_home')
+    else:
+        form = VehicleForm()
+    return render(request, 'add_veiculo.html', {'form': form})
+
+@login_required
+def editar_veiculo(request, pk):
+    veiculo = get_object_or_404(Vehicle, pk=pk, client=request.user)
+    if request.method == 'POST':
+        form = VehicleForm(request.POST, instance=veiculo)
+        if form.is_valid():
+            form.save()
+            return redirect('cliente_home')
+    else:
+        form = VehicleForm(instance=veiculo)
+    return render(request, 'edit_veiculo.html', {'form': form, 'veiculo': veiculo})

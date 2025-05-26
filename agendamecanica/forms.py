@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, Mechanic
+from .models import User, Mechanic, Vehicle
 from django.contrib.auth.forms import AuthenticationForm
+import datetime
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -29,3 +30,18 @@ class MechanicForm(forms.ModelForm):
     def clean_specialties(self):
         data = self.cleaned_data['specialties']
         return [item.strip() for item in data.split(',') if item.strip()]
+    
+
+
+class VehicleForm(forms.ModelForm):
+     class Meta:
+        model = Vehicle
+        fields = ['marca', 'modelo', 'ano', 'placa']
+
+     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        ano_atual = datetime.datetime.now().year
+        self.fields['ano'].widget = forms.NumberInput(attrs={
+            'min': 1900,
+            'max': ano_atual + 1
+        })

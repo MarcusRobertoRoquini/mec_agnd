@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Adicionar Veículo - AutoAgenda</title>
+</head>
+<body>
+    <h1>Adicionar Novo Veículo</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Salvar Veículo</button>
+    </form>
+
+    <p><a href="{% url 'cliente_home' %}">Voltar à Área do Cliente</a></p>
+</body>
+</html>
