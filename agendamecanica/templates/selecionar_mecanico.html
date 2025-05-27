@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Escolha um Mecânico para "{{ servico.nome }}"</h2>
+
+  {% if mecanicos %}
+    <div class="list-group">
+      {% for mec in mecanicos %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">{{ mec.user.get_full_name }}</h5>
+            <p class="card-text"><strong>Especialidades:</strong> {{ mec.specialties|join:", " }}</p>
+            <button 
+              class="btn btn-outline-primary ver-horarios" 
+              data-mecanico-id="{{ mec.id }}">
+              Ver horários disponíveis
+            </button>
+            <div id="horarios-{{ mec.id }}" class="horarios mt-3" style="display:none;"></div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">Nenhum mecânico disponível para esse serviço.</p>
+  {% endif %}
+</div>
+
+<script>
+document.querySelectorAll('.ver-horarios').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mecanicoId = btn.getAttribute('data-mecanico-id');
+    const divHorarios = document.getElementById(`horarios-${mecanicoId}`);
+
+    fetch(`/ajax/horarios-disponiveis/${mecanicoId}/`)
+      .then(response => response.json())
+      .then(data => {
+        divHorarios.innerHTML = '';
+        if (data.horarios.length > 0) {
+          data.horarios.forEach(h => {
+            const button = document.createElement('button');
+            button.textContent = h;
+            button.classList.add('btn', 'btn-sm', 'btn-success', 'me-2', 'mb-2');
+            button.onclick = () => confirmarHorario(mecanicoId, h);
+            divHorarios.appendChild(button);
+          });
+        } else {
+          divHorarios.innerHTML = '<p class="text-danger">Sem horários disponíveis.</p>';
+        }
+        divHorarios.style.display = 'block';
+      });
+  });
+});
+
+function confirmarHorario(mecanicoId, horario) {
+  if (confirm(`Confirmar agendamento para ${horario}?`)) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/confirmar-agendamento/`;
+    
+    const csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = 'csrfmiddlewaretoken';
+    csrf.value = '{{ csrf_token }}';
+
+    ['mecanicoId', 'horario'].forEach(name => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      input.value = eval(name);
+      form.appendChild(input);
+    });
+
+    form.appendChild(csrf);
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+</script>
+{% endblock %}

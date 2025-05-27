@@ -9,4 +9,7 @@ urlpatterns = [
     path('mecanicohome/', views.mecanico_home, name='mecanico_home'),
     path('veiculo/novo/', views.adicionar_veiculo, name='adicionar_veiculo'),
     path('veiculo/<int:pk>/editar/', views.editar_veiculo, name='editar_veiculo'),
+    path('agendamento/iniciar/', views.iniciar_agendamento_view, name='iniciar_agendamento'),
+    path('selecionar-mecanico/', views.selecionar_mecanico, name='selecionar_mecanico'),
+    path('ajax/horarios-disponiveis/<int:mecanico_id>/', views.horarios_disponiveis, name='horarios_disponiveis'),
 ]

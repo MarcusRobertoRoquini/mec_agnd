@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login
 from .forms import CustomUserCreationForm, EmailAuthenticationForm, MechanicForm, VehicleForm
-from .models import Mechanic, Service, ServiceHistory, Budget, Appointment, Vehicle
+from .models import Mechanic, Service, ServiceHistory, Budget, Appointment, Vehicle, Category
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 from collections import defaultdict
 from django.contrib import messages
 from django.contrib.auth import get_backends
@@ -13,6 +13,8 @@ from django.contrib.auth import login as auth_login
 from django.contrib.auth import get_backends
 from django.shortcuts import redirect, render
 from .forms import CustomUserCreationForm
+from utils import gerar_horarios_disponiveis
+from django.http import JsonResponse
 
 def register(request):
     if request.method == 'POST':
@@ -186,3 +188,55 @@ def editar_veiculo(request, pk):
     else:
         form = VehicleForm(instance=veiculo)
     return render(request, 'edit_veiculo.html', {'form': form, 'veiculo': veiculo})
+
+
+@login_required
+def iniciar_agendamento_view(request):
+    user = request.user
+    veiculos = Vehicle.objects.filter(client=user)
+    categorias = Category.objects.all()
+    servicos = Service.objects.all()
+
+    if request.method == 'POST':
+        veiculo_id = request.POST.get('veiculo')
+        categoria_id = request.POST.get('categoria')
+        servico_id = request.POST.get('servico')
+
+        if not (veiculo_id and categoria_id and servico_id):
+            messages.error(request, "Todos os campos são obrigatórios.")
+            return redirect('iniciar_agendamento')
+
+        return redirect('selecionar_mecanico', veiculo_id=veiculo_id, categoria_id=categoria_id, servico_id=servico_id)
+
+    return render(request, 'agendamento/iniciar_agendamento.html', {
+        'veiculos': veiculos,
+        'categorias': categorias,
+        'servicos': servicos
+    })
+
+
+
+@login_required
+def selecionar_mecanico_view(request, veiculo_id, categoria_id, servico_id):
+    servico = get_object_or_404(Service, id=servico_id)
+    veiculo = get_object_or_404(Vehicle, id=veiculo_id, client=request.user)
+
+    mecanicos = Mechanic.objects.filter(specialties__icontains=servico.nome)
+
+    request.session['agendamento_dados'] = {
+        'veiculo_id': veiculo_id,
+        'categoria_id': categoria_id,
+        'servico_id': servico_id,
+    }
+
+    return render(request, 'agendamento/selecionar_mecanico.html', {
+        'mecanicos': mecanicos,
+        'servico': servico,
+        'veiculo': veiculo
+    })
+
+@login_required
+def horarios_disponiveis(request, mecanico_id):
+    mecanico = get_object_or_404(Mechanic, id=mecanico_id)
+    horarios = gerar_horarios_disponiveis(mecanico)
+    return JsonResponse({'horarios': horarios})
