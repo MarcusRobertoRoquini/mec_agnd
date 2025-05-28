@@ -13,7 +13,7 @@ from django.contrib.auth import login as auth_login
 from django.contrib.auth import get_backends
 from django.shortcuts import redirect, render
 from .forms import CustomUserCreationForm
-from utils import gerar_horarios_disponiveis
+from .utils import gerar_horarios_disponiveis
 from django.http import JsonResponse
 
 def register(request):
@@ -208,7 +208,7 @@ def iniciar_agendamento_view(request):
 
         return redirect('selecionar_mecanico', veiculo_id=veiculo_id, categoria_id=categoria_id, servico_id=servico_id)
 
-    return render(request, 'agendamento/iniciar_agendamento.html', {
+    return render(request, 'iniciar_agendamento.html', {
         'veiculos': veiculos,
         'categorias': categorias,
         'servicos': servicos
@@ -217,7 +217,7 @@ def iniciar_agendamento_view(request):
 
 
 @login_required
-def selecionar_mecanico_view(request, veiculo_id, categoria_id, servico_id):
+def selecionar_mecanico(request, veiculo_id, categoria_id, servico_id):
     servico = get_object_or_404(Service, id=servico_id)
     veiculo = get_object_or_404(Vehicle, id=veiculo_id, client=request.user)
 
@@ -229,7 +229,7 @@ def selecionar_mecanico_view(request, veiculo_id, categoria_id, servico_id):
         'servico_id': servico_id,
     }
 
-    return render(request, 'agendamento/selecionar_mecanico.html', {
+    return render(request, 'selecionar_mecanico.html', {
         'mecanicos': mecanicos,
         'servico': servico,
         'veiculo': veiculo
@@ -240,3 +240,8 @@ def horarios_disponiveis(request, mecanico_id):
     mecanico = get_object_or_404(Mechanic, id=mecanico_id)
     horarios = gerar_horarios_disponiveis(mecanico)
     return JsonResponse({'horarios': horarios})
+
+@login_required
+def servicos_por_categoria(request, categoria_id):
+    servicos = Service.objects.filter(categoria_id=categoria_id).values('id', 'nome')
+    return JsonResponse({'servicos': list(servicos)})

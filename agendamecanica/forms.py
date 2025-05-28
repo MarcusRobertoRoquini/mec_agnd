@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, Mechanic, Vehicle
+from .models import User, Mechanic, Vehicle, Category
 from django.contrib.auth.forms import AuthenticationForm
 import datetime
 
@@ -13,23 +13,33 @@ class EmailAuthenticationForm(AuthenticationForm):
     username = forms.EmailField(label="Email", widget=forms.EmailInput(attrs={'autofocus': True}))
 
 
+DIAS_SEMANA = [
+    ('segunda', 'Segunda-feira'),
+    ('terca', 'Terça-feira'),
+    ('quarta', 'Quarta-feira'),
+    ('quinta', 'Quinta-feira'),
+    ('sexta', 'Sexta-feira'),
+    ('sabado', 'Sábado'),
+    ('domingo', 'Domingo'),
+]
+
 class MechanicForm(forms.ModelForm):
-    specialties = forms.CharField(
-        widget=forms.TextInput(attrs={'placeholder': 'Ex: freios, motor, suspensão'}),
-        help_text='Separe as especialidades por vírgula.'
+    specialties = forms.ModelMultipleChoiceField(
+        queryset=Category.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Especialidades",
+        help_text="Selecione as especialidades do mecânico."
     )
-    available_hours = forms.JSONField(
-        widget=forms.Textarea(attrs={'rows': 4, 'placeholder': '{"segunda": ["08:00-12:00", "13:00-17:00"]}'}),
-        help_text='Insira os horários disponíveis no formato JSON. Ex: {"segunda": ["08:00-12:00"]}'
+
+    available_hours = forms.CharField(
+        widget=forms.HiddenInput(),  # Será preenchido via JS
+        required=False
     )
 
     class Meta:
         model = Mechanic
         fields = ['specialties', 'available_hours']
-
-    def clean_specialties(self):
-        data = self.cleaned_data['specialties']
-        return [item.strip() for item in data.split(',') if item.strip()]
     
 
 

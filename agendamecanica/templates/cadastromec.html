@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Cadastro de Mecânico - AutoAgenda</title>
+    <style>
+        .form-group { margin-bottom: 1rem; }
+        .error { color: red; }
+        .dia-bloco { margin-bottom: 1rem; }
+        .horarios-dia input[type="time"] { margin-right: 0.5rem; }
+        ul.lista-horarios { list-style: none; padding-left: 0; margin-top: 0.5rem; }
+        ul.lista-horarios li { margin-bottom: 0.2rem; }
+        ul.lista-horarios button { margin-left: 0.5rem; }
+    </style>
 </head>
 <body>
     <main>
@@ -17,28 +26,91 @@
             {% endif %}
 
             <fieldset>
-                <legend>Informações do Mecânico</legend>
-
-                {% for field in mechanic_form %}
-                    <div class="form-group">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
-                        
-                        {% if field.help_text %}
-                            <small>{{ field.help_text }}</small>
-                        {% endif %}
-                        
-                        {% if field.errors %}
-                            <div class="error">{{ field.errors }}</div>
-                        {% endif %}
-                    </div>
-                {% endfor %}
+                <legend>Especialidades</legend>
+                <div class="form-group">
+                    {{ mechanic_form.specialties }}
+                    <small>{{ mechanic_form.specialties.help_text }}</small>
+                    {% if mechanic_form.specialties.errors %}
+                        <div class="error">{{ mechanic_form.specialties.errors }}</div>
+                    {% endif %}
+                </div>
             </fieldset>
+
+            <fieldset>
+                <legend>Horários Disponíveis</legend>
+                <div id="horarios-container">
+                    {% for dia, nome in (
+                        ('segunda', 'Segunda-feira'),
+                        ('terca', 'Terça-feira'),
+                        ('quarta', 'Quarta-feira'),
+                        ('quinta', 'Quinta-feira'),
+                        ('sexta', 'Sexta-feira'),
+                        ('sabado', 'Sábado'),
+                        ('domingo', 'Domingo')
+                    ) %}
+                        <div class="dia-bloco">
+                            <label>{{ nome }}</label>
+                            <div class="horarios-dia" data-dia="{{ dia }}">
+                                <input type="time" class="hora-input">
+                                <button type="button" onclick="adicionarHorario(this)">+</button>
+                            </div>
+                            <ul class="lista-horarios" data-dia="{{ dia }}"></ul>
+                        </div>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <!-- Campo oculto para armazenar o JSON de horários -->
+            <input type="hidden" name="available_hours" id="available-hours">
 
             <button type="submit">Finalizar Cadastro</button>
         </form>
 
         <p>Já tem uma conta? <a href="{% url 'login' %}">Faça login aqui</a></p>
     </main>
+
+    <script>
+        function adicionarHorario(botao) {
+            const container = botao.closest('.horarios-dia');
+            const dia = container.dataset.dia;
+            const horaInput = container.querySelector('input');
+            const hora = horaInput.value;
+
+            if (!hora) return;
+
+            const lista = document.querySelector(`ul.lista-horarios[data-dia="${dia}"]`);
+
+            // Evita adicionar horários duplicados
+            if (Array.from(lista.querySelectorAll('li')).some(li => li.textContent.startsWith(hora))) {
+                alert("Horário já adicionado para este dia.");
+                return;
+            }
+
+            const item = document.createElement('li');
+            item.textContent = hora;
+
+            const remover = document.createElement('button');
+            remover.textContent = 'x';
+            remover.onclick = function () {
+                item.remove();
+                atualizarCampoJSON();
+            };
+
+            item.appendChild(remover);
+            lista.appendChild(item);
+            horaInput.value = '';
+            atualizarCampoJSON();
+        }
+
+        function atualizarCampoJSON() {
+            const resultado = {};
+            document.querySelectorAll('ul.lista-horarios').forEach(lista => {
+                const dia = lista.dataset.dia;
+                const horas = Array.from(lista.querySelectorAll('li')).map(li => li.childNodes[0].nodeValue);
+                if (horas.length) resultado[dia] = horas;
+            });
+            document.getElementById('available-hours').value = JSON.stringify(resultado);
+        }
+    </script>
 </body>
 </html>

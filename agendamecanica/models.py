@@ -85,14 +85,12 @@ class Mechanic(models.Model):
         on_delete=models.CASCADE,
         related_name='mechanic'
     )
-    specialties = ArrayField(
-        models.CharField(max_length=100),
+    specialties = models.ManyToManyField(
+        Category,
         blank=True,
-        default=list,
-        help_text="Especialidades do mecânico, ex: freios, suspensão"
+        help_text="Selecione as categorias em que o mecânico é especializado."
     )
-    available_hours = JSONField(default=dict)  # Exemplo: {"segunda": ["08:00-17:00"]}
-
+    available_hours = models.JSONField(default=dict)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

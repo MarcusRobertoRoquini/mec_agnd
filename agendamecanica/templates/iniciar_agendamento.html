@@ -1,57 +1,62 @@
-<!-- templates/agendamento/iniciar_agendamento.html -->
 {% extends 'base.html' %}
 {% block content %}
-<section class="agendamento-inicio py-5">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-8 col-md-10">
+<div class="container mt-4">
+  <h2>Iniciar Agendamento</h2>
+  <form method="POST">
+    {% csrf_token %}
 
-        <h2 class="mb-4 text-center">Iniciar Agendamento</h2>
-
-        <form method="POST" novalidate>
-          {% csrf_token %}
-
-          <!-- Seletor de veículo -->
-          <div class="mb-4">
-            <label for="veiculo" class="form-label">Selecione seu veículo:</label>
-            <select name="veiculo" id="veiculo" class="form-select" required>
-              <option value="" disabled selected>Escolha um veículo</option>
-              {% for v in veiculos %}
-                <option value="{{ v.id }}">{{ v.modelo }} - {{ v.placa }}</option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <!-- Seletor de categoria -->
-          <div class="mb-4">
-            <label for="categoria" class="form-label">Selecione a categoria:</label>
-            <select name="categoria" id="categoria" class="form-select" required>
-              <option value="" disabled selected>Escolha uma categoria</option>
-              {% for c in categorias %}
-                <option value="{{ c.id }}">{{ c.nome }}</option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <!-- Seletor de serviço -->
-          <div class="mb-4">
-            <label for="servico" class="form-label">Selecione o serviço:</label>
-            <select name="servico" id="servico" class="form-select" required>
-              <option value="" disabled selected>Escolha um serviço</option>
-              {% for s in servicos %}
-                <option value="{{ s.id }}">{{ s.nome }} ({{ s.categoria.nome }})</option>
-              {% endfor %}
-            </select>
-          </div>
-
-          <!-- Botão de envio -->
-          <div class="text-center">
-            <button type="submit" class="btn btn-primary px-4">Próximo</button>
-          </div>
-        </form>
-
-      </div>
+    <div class="form-group">
+      <label for="veiculo">Selecione seu veículo:</label>
+      <select name="veiculo" id="veiculo" class="form-control" required>
+        {% for v in veiculos %}
+          <option value="{{ v.id }}">{{ v.modelo }} - {{ v.placa }}</option>
+        {% endfor %}
+      </select>
     </div>
-  </div>
-</section>
+
+    <div class="form-group mt-3">
+      <label for="categoria">Selecione a categoria:</label>
+      <select name="categoria" id="categoria" class="form-control" required>
+        <option value="">-- Escolha uma categoria --</option>
+        {% for c in categorias %}
+          <option value="{{ c.id }}">{{ c.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group mt-3">
+      <label for="servico">Selecione o serviço:</label>
+      <select name="servico" id="servico" class="form-control" required>
+        <option value="">-- Selecione uma categoria primeiro --</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-4">Próximo</button>
+  </form>
+</div>
+
+<script>
+  document.getElementById('categoria').addEventListener('change', function() {
+    const categoriaId = this.value;
+    const servicoSelect = document.getElementById('servico');
+
+    // Limpa opções anteriores
+    servicoSelect.innerHTML = '<option value="">Carregando serviços...</option>';
+
+    fetch(`/ajax/servicos-por-categoria/${categoriaId}/`)
+      .then(response => response.json())
+      .then(data => {
+        servicoSelect.innerHTML = '<option value="">-- Selecione o serviço --</option>';
+        data.servicos.forEach(servico => {
+          const option = document.createElement('option');
+          option.value = servico.id;
+          option.textContent = servico.nome;
+          servicoSelect.appendChild(option);
+        });
+      })
+      .catch(() => {
+        servicoSelect.innerHTML = '<option value="">Erro ao carregar serviços.</option>';
+      });
+  });
+</script>
 {% endblock %}
