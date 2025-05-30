@@ -15,6 +15,7 @@ from django.shortcuts import redirect, render
 from .forms import CustomUserCreationForm
 from .utils import gerar_horarios_disponiveis
 from django.http import JsonResponse
+import json
 
 def register(request):
     if request.method == 'POST':
@@ -71,28 +72,36 @@ def login_view(request):
 
 
 
-
 @login_required
 def cadastro_mecanico(request):
     if not request.user.role == 'mecanico':
-        return redirect('login')  # Apenas mecânicos devem acessar
+        return redirect('login')
 
     if hasattr(request.user, 'mechanic'):
-        return redirect('login')  # Se já completou, não precisa repetir
+        return redirect('mecanico_home')
 
     if request.method == 'POST':
         form = MechanicForm(request.POST)
+        available_hours_raw = request.POST.get('available_hours')
+        try:
+            available_hours = json.loads(available_hours_raw) if available_hours_raw else {}
+        except json.JSONDecodeError:
+            available_hours = {}
+            messages.error(request, "Erro ao processar os horários. Tente novamente.")
+
         if form.is_valid():
             mechanic = form.save(commit=False)
             mechanic.user = request.user
+            mechanic.available_hours = available_hours
             mechanic.save()
-            return redirect('mecanico_home')  # Finaliza o cadastro
+            form.save_m2m()  # Para salvar os dados ManyToMany (especialidades)
+            return redirect('mecanico_home')
     else:
         form = MechanicForm()
 
     return render(request, 'cadastromec.html', {
         'mechanic_form': form,
-        'user_form': None  
+        'user_form': None
     })
 
 @login_required
@@ -122,46 +131,45 @@ def mecanico_home(request):
     user = request.user
 
     if user.role != 'mecanico':
-        return redirect('mecanico_home')  # segurança
+        return redirect('login')  # Segurança
 
     mechanic = user.mechanic
-
     hoje = timezone.now().date()
     semana = [hoje + timedelta(days=i) for i in range(7)]
 
-    # Agendamentos do dia atual
+    # Agendamentos de hoje
     agendamentos_hoje = mechanic.appointments.filter(
         appointment_datetime__date=hoje
     ).select_related('client', 'vehicle', 'service')
 
-    # Orçamentos respondidos (recentes)
+    # Orçamentos respondidos
     orcamentos_respondidos = mechanic.appointments.filter(
         budget__status__in=['aprovado', 'recusado']
-    ).select_related('budget', 'client')
+    ).select_related('budget', 'client', 'service')
 
-    # Agrupar agendamentos por dia 
+    # Agendamentos da semana
     agendamentos_semanal = defaultdict(list)
     for agendamento in mechanic.appointments.filter(
         appointment_datetime__date__range=(hoje, hoje + timedelta(days=6))
-    ):
-        agendamentos_semanal[agendamento.appointment_datetime.date()].append(agendamento)
+    ).select_related('service'):
+        data_agendamento = agendamento.appointment_datetime.date()
+        agendamentos_semanal[data_agendamento].append(agendamento)
 
-    # Histórico de serviços
-    historico = mechanic.servicos_realizados.all()
+    # Histórico de serviços realizados
+    historico = mechanic.servicos_realizados.all().select_related('vehicle', 'service')
 
     context = {
         'mecanico': mechanic,
-        'especialidades': mechanic.specialties,
+        'especialidades': mechanic.specialties.all(),  # ManyToMany para Category
         'horarios': mechanic.available_hours,
         'agendamentos_hoje': agendamentos_hoje,
         'orcamentos_respondidos': orcamentos_respondidos,
         'agendamentos_semanal': dict(agendamentos_semanal),
         'historico': historico,
         'semana': semana,
-        'now': timezone.now(),
         'hoje': hoje.strftime('%d/%m/%Y'),
-
     }
+
     return render(request, 'mechome.html', context)
 
 @login_required
@@ -221,7 +229,7 @@ def selecionar_mecanico(request, veiculo_id, categoria_id, servico_id):
     servico = get_object_or_404(Service, id=servico_id)
     veiculo = get_object_or_404(Vehicle, id=veiculo_id, client=request.user)
 
-    mecanicos = Mechanic.objects.filter(specialties__icontains=servico.nome)
+    mecanicos = Mechanic.objects.filter(specialties__id=categoria_id, user__aprovado=True)
 
     request.session['agendamento_dados'] = {
         'veiculo_id': veiculo_id,
@@ -234,6 +242,7 @@ def selecionar_mecanico(request, veiculo_id, categoria_id, servico_id):
         'servico': servico,
         'veiculo': veiculo
     })
+
 
 @login_required
 def horarios_disponiveis(request, mecanico_id):

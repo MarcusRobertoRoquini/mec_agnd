@@ -1,10 +1,17 @@
+
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{% static 'agendamecanica/css/login.css' %}">
+
     <title>Login - AutoAgenda</title>
 </head>
+<header>
+    <img src="{% static 'agendamecanica/images/logo.png' %}" class="logo" alt="Logo">
+</header>
 <body>
     <main>
         <h2>Login</h2>

@@ -9,7 +9,13 @@
         <div class="card mb-3">
           <div class="card-body">
             <h5 class="card-title">{{ mec.user.get_full_name }}</h5>
-            <p class="card-text"><strong>Especialidades:</strong> {{ mec.specialties|join:", " }}</p>
+            <p class="card-text"><strong>Especialidades:</strong>
+              {% for esp in mec.specialties.all %}
+                {{ esp.nome }}{% if not forloop.last %}, {% endif %}
+              {% empty %}
+                Nenhuma especialidade cadastrada
+              {% endfor %}
+            </p>
             <button 
               class="btn btn-outline-primary ver-horarios" 
               data-mecanico-id="{{ mec.id }}">

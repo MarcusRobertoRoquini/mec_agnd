@@ -1,0 +1,104 @@
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #1F2937; /* Azul escuro */
+    color: #FFFFFF;
+}
+
+.logo {
+    
+    display: block;
+    margin: 2rem auto 1rem auto;
+    width: 250px;      /* Tamanho ideal para desktop */
+    max-width: 90%;    /* Evita estourar em telas menores */
+    height: auto;
+    object-fit: contain;
+}
+
+/* formulário */
+main {
+    background-color: #111827; /* Tom mais escuro para contraste */
+    padding: 2rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 2rem auto;
+}
+
+/* Título */
+h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+/* Campos de formulário */
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: 500;
+}
+
+input {
+    width: 100%;
+    padding: 0.6rem;
+    border: none;
+    border-radius: 6px;
+    background-color: #374151; /* Cinza escuro */
+    color: #fff;
+}
+
+input:focus {
+    outline: 2px solid #F97316; /* Laranja queimado */
+}
+
+/* Mensagens de erro */
+.error {
+    color: #f87171;
+    font-size: 0.875rem;
+    margin-top: 0.3rem;
+}
+
+/* Botão de login */
+button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #F97316;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+button:hover {
+    background-color: #ea580c;
+}
+
+/* Links e textos */
+p {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+a {
+    color: #F97316;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+
+

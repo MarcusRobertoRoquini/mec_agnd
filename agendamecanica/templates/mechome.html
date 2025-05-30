@@ -7,7 +7,13 @@
     <title>Área do Mecânico - AutoAgenda</title>
 </head>
 <body>
-    <h1>Bem-vindo, {{ mecanico.user.first_name }}!</h1>
+    <header>
+        <h1>Bem-vindo, {{ mecanico.user.first_name }}!</h1>
+        <form action="{% url 'login' %}" method="POST" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit">Logout</button>
+        </form>
+    </header>
 
     <!-- Perfil do Mecânico -->
     <section>
@@ -15,18 +21,28 @@
         <p><strong>Nome:</strong> {{ mecanico.user.get_full_name }}</p>
         <p><strong>Email:</strong> {{ mecanico.user.email }}</p>
         <p><strong>Telefone:</strong> {{ mecanico.user.telefone }}</p>
-        <p><strong>Especialidades:</strong> {{ especialidades|join:", " }}</p>
+
+        <p><strong>Especialidades:</strong>
+            {% for cat in especialidades %}
+                {{ cat.nome }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+
         <p><strong>Horários disponíveis:</strong></p>
         <ul>
             {% for dia, horas in horarios.items %}
-                <li>{{ dia|title }}: {{ horas|join:", " }}</li>
+                <li><strong>{{ dia|title }}:</strong>
+                    {{ horas|join:", " }}
+                </li>
+            {% empty %}
+                <li>Nenhum horário cadastrado.</li>
             {% endfor %}
         </ul>
     </section>
 
     <!-- Agendamentos do Dia -->
     <section>
-        <h2>Agendamentos do Dia ({{ hoje|date:"d/m/Y" }})</h2>
+        <h2>Agendamentos do Dia ({{ hoje }})</h2>
         <ul>
             {% for ag in agendamentos_hoje %}
                 <li>
