@@ -16,6 +16,9 @@ from .forms import CustomUserCreationForm
 from .utils import gerar_horarios_disponiveis
 from django.http import JsonResponse
 import json
+from django.utils.timezone import make_aware, is_naive
+from django.views.decorators.http import require_POST
+from django.utils.dateparse import parse_datetime
 
 def register(request):
     if request.method == 'POST':
@@ -108,15 +111,17 @@ def cadastro_mecanico(request):
 def cliente_home(request):
     user = request.user
 
+    # Garantir que apenas clientes acessem esta página
     if user.role != 'cliente':
-        return redirect('clientehome')  # segurança: só clientes acessam
+        return redirect('login')  # ou 'home' se houver uma página inicial segura
 
-    # Dados principais
+    # Coleta de dados
     veiculos = user.vehicles.all()
-    historico = ServiceHistory.objects.filter(vehicle__client=user)
-    orcamentos = Budget.objects.filter(appointment__client=user)
-    agendamentos = Appointment.objects.filter(client=user)
+    historico = ServiceHistory.objects.filter(vehicle__client=user).order_by('-data_realizacao')
+    orcamentos = Budget.objects.filter(appointment__client=user).order_by('-id')  # ou .order_by('-criado_em') se tiver o campo
+    agendamentos = Appointment.objects.filter(client=user).order_by('appointment_datetime')
 
+    # Contexto passado para o template
     context = {
         'cliente': user,
         'veiculos': veiculos,
@@ -226,16 +231,16 @@ def iniciar_agendamento_view(request):
 
 @login_required
 def selecionar_mecanico(request, veiculo_id, categoria_id, servico_id):
+    # Salva os dados na sessão para serem usados na confirmação
+    request.session['veiculo_id'] = veiculo_id
+    request.session['servico_id'] = servico_id
+
+    categoria = get_object_or_404(Category, id=categoria_id)
     servico = get_object_or_404(Service, id=servico_id)
-    veiculo = get_object_or_404(Vehicle, id=veiculo_id, client=request.user)
+    veiculo = get_object_or_404(Vehicle, id=veiculo_id)
 
-    mecanicos = Mechanic.objects.filter(specialties__id=categoria_id, user__aprovado=True)
-
-    request.session['agendamento_dados'] = {
-        'veiculo_id': veiculo_id,
-        'categoria_id': categoria_id,
-        'servico_id': servico_id,
-    }
+    # Busca mecânicos que tenham a especialidade correspondente à categoria
+    mecanicos = Mechanic.objects.filter(specialties=categoria)
 
     return render(request, 'selecionar_mecanico.html', {
         'mecanicos': mecanicos,
@@ -247,10 +252,78 @@ def selecionar_mecanico(request, veiculo_id, categoria_id, servico_id):
 @login_required
 def horarios_disponiveis(request, mecanico_id):
     mecanico = get_object_or_404(Mechanic, id=mecanico_id)
-    horarios = gerar_horarios_disponiveis(mecanico)
-    return JsonResponse({'horarios': horarios})
+    eventos = gerar_horarios_disponiveis(mecanico)
+    return JsonResponse(eventos, safe=False)
+
 
 @login_required
 def servicos_por_categoria(request, categoria_id):
     servicos = Service.objects.filter(categoria_id=categoria_id).values('id', 'nome')
     return JsonResponse({'servicos': list(servicos)})
+
+@login_required
+@require_POST
+def confirmar_agendamento(request):
+    print("CONFIRMAR AGENDAMENTO CHAMADO")
+
+    horario_str = request.POST.get('horario')
+    mecanico_id = request.POST.get('mecanicoId')
+    servico_id = request.session.get('servico_id')
+    veiculo_id = request.session.get('veiculo_id')
+
+    print("DEBUG Dados recebidos:")
+    print("horario:", horario_str)
+    print("mecanico_id:", mecanico_id)
+    print("servico_id (sessão):", servico_id)
+    print("veiculo_id (sessão):", veiculo_id)
+
+    if not (horario_str and mecanico_id and servico_id and veiculo_id):
+        messages.error(request, "Dados incompletos para confirmação de agendamento.")
+        return redirect('cliente_home')
+    
+
+    try:
+        horario = parse_datetime(horario_str)
+        if horario is None:
+            raise ValueError("Formato de data inválido.")
+
+        # Torna timezone-aware se for naive
+        if is_naive(horario):
+            horario = make_aware(horario)
+
+    except Exception as e:
+        print("Erro ao converter horário:", e)
+        messages.error(request, "Horário inválido.")
+        return redirect('cliente_home')
+
+    mecanico = get_object_or_404(Mechanic, id=mecanico_id)
+    servico = get_object_or_404(Service, id=servico_id)
+    veiculo = get_object_or_404(Vehicle, id=veiculo_id)
+
+    if Appointment.objects.filter(mechanic=mecanico, appointment_datetime=horario).exists():
+        messages.error(request, "Este horário já foi agendado por outro cliente.")
+        return redirect('cliente_home')
+
+    try:
+        agendamento = Appointment.objects.create(
+            client=request.user,
+            mechanic=mecanico,
+            service=servico,
+            vehicle=veiculo,
+            appointment_datetime=horario,
+            status='pendente'
+        )
+        print("✅ AGENDAMENTO CRIADO:", agendamento.id)
+    except Exception as e:
+        print("❌ Erro ao criar agendamento:", e)
+        messages.error(request, "Erro ao criar agendamento.")
+        return redirect('cliente_home')
+
+    # Limpa dados da sessão
+    request.session.pop('servico_id', None)
+    request.session.pop('veiculo_id', None)
+
+    messages.success(request, "Agendamento confirmado com sucesso!")
+    return render(request, 'confirmacao_agendamento.html', {
+        'agendamento': agendamento
+    })

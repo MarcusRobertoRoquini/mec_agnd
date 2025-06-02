@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Área do Cliente - AutoAgenda</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 </head>
-<body>
-    <h1>Bem-vindo, {{ cliente.first_name }}!</h1>
+<body class="container mt-4">
+    <!-- Botão de logout -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Bem-vindo, {{ cliente.first_name }}!</h1>
+        <a href="{% url 'login' %}" class="btn btn-outline-danger">Sair</a>
+    </div>
 
     <!-- Seção Perfil -->
-    <section>
+    <section class="mb-4">
         <h2>Perfil</h2>
         <p>Nome: {{ cliente.get_full_name }}</p>
         <p>Email: {{ cliente.email }}</p>
@@ -16,7 +21,7 @@
     </section>
 
     <!-- Seção Veículos -->
-    <section>
+    <section class="mb-4">
         <h2>Meus Veículos</h2>
         <ul>
             {% for v in veiculos %}
@@ -28,11 +33,38 @@
                 <li>Você ainda não cadastrou veículos.</li>
             {% endfor %}
         </ul>
-        <a href="{% url 'adicionar_veiculo' %}">Adicionar novo veículo</a>
+        <a href="{% url 'adicionar_veiculo' %}" class="btn btn-sm btn-primary mt-2">Adicionar novo veículo</a>
+    </section>
+
+    <!-- Seção Agendamentos -->
+    <section class="mb-4">
+        <h2>Meus Agendamentos</h2>
+        {% if agendamentos %}
+            <div class="list-group">
+                {% for ag in agendamentos %}
+                    <div class="list-group-item">
+                        <p><strong>Serviço:</strong> {{ ag.service.nome }}</p>
+                        <p><strong>Mecânico:</strong> {{ ag.mechanic.user.get_full_name }}</p>
+                        <p><strong>Data:</strong> {{ ag.appointment_datetime|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Status:</strong>
+                            {% if ag.status == "pendente" %}
+                                <span class="badge bg-warning text-dark">Pendente</span>
+                            {% elif ag.status == "em_analise" %}
+                                <span class="badge bg-info text-dark">Em análise</span>
+                            {% elif ag.status == "concluido" %}
+                                <span class="badge bg-success">Concluído</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">Você ainda não possui agendamentos.</p>
+        {% endif %}
     </section>
 
     <!-- Seção Histórico de Serviços -->
-    <section>
+    <section class="mb-4">
         <h2>Histórico de Serviços</h2>
         <ul>
             {% for h in historico %}
@@ -44,7 +76,7 @@
     </section>
 
     <!-- Seção Orçamentos -->
-    <section>
+    <section class="mb-4">
         <h2>Orçamentos Recebidos</h2>
         <ul>
             {% for o in orcamentos %}
@@ -60,9 +92,9 @@
     </section>
 
     <!-- Seção Agendamento -->
-    <section>
+    <section class="mb-4">
         <h2>Solicitar Serviço</h2>
-        <a href="{% url 'iniciar_agendamento' %}">Agendar novo serviço</a>
+        <a href="{% url 'iniciar_agendamento' %}" class="btn btn-success">Agendar novo serviço</a>
     </section>
 </body>
 </html>

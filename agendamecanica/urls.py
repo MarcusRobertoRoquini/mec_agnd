@@ -15,4 +15,5 @@ urlpatterns = [
     path('selecionar_mecanico/<int:veiculo_id>/<int:categoria_id>/<int:servico_id>/', views.selecionar_mecanico, name='selecionar_mecanico'),
     path('ajax/horarios-disponiveis/<int:mecanico_id>/', views.horarios_disponiveis, name='horarios_disponiveis'),
     path('ajax/servicos-por-categoria/<int:categoria_id>/', views.servicos_por_categoria, name='servicos_por_categoria'),
+    path('confirmar-agendamento/', views.confirmar_agendamento, name='confirmar_agendamento'),
 ]

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5 text-center">
+  <h2 class="mb-4 text-success">Agendamento Confirmado!</h2>
+
+  <p><strong>Data e hora:</strong> {{ agendamento.appointment_datetime|date:"d/m/Y H:i" }}</p>
+  <p><strong>Mecânico:</strong> {{ agendamento.mechanic.user.get_full_name }}</p>
+  <p><strong>Veículo:</strong> {{ agendamento.vehicle }}</p>
+
+  <a href="{% url 'cliente_home' %}" class="btn btn-primary mt-3">Voltar à Página Inicial</a>
+</div>
+{% endblock %}

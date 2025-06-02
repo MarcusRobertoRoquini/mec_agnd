@@ -4,7 +4,7 @@ from .models import Appointment
 
 def gerar_horarios_disponiveis(mecanico):
     hoje = datetime.now().date()
-    horarios_livres = []
+    eventos = []
 
     dias_traduzidos = {
         'monday': 'segunda',
@@ -16,7 +16,7 @@ def gerar_horarios_disponiveis(mecanico):
         'sunday': 'domingo'
     }
 
-    for i in range(7):  # próximos 7 dias
+    for i in range(7):
         dia = hoje + timedelta(days=i)
         nome_dia = dias_traduzidos.get(dia.strftime('%A').lower())
 
@@ -25,17 +25,37 @@ def gerar_horarios_disponiveis(mecanico):
 
         for intervalo in mecanico.available_hours[nome_dia]:
             inicio_str, fim_str = intervalo.split('-')
-            inicio = datetime.combine(dia, datetime.strptime(inicio_str, "%H:%M").time())
-            fim = datetime.combine(dia, datetime.strptime(fim_str, "%H:%M").time())
+            # Função auxiliar para converter string de horário
+            def parse_horario(horario_str):
+                horario_str = horario_str.strip()  # <- ESSENCIAL
+                formatos = ["%H:%M", "%H:%M:%S"]
+                for fmt in formatos:
+                    try:
+                        return datetime.strptime(horario_str, fmt).time()
+                    except ValueError:
+                        continue
+                raise ValueError(f"Formato de horário inválido: {horario_str}")
+
+
+            inicio = datetime.combine(dia, parse_horario(inicio_str))
+            fim = datetime.combine(dia, parse_horario(fim_str))
+
 
             atual = inicio
-            while atual + timedelta(minutes=30) <= fim:
+            while atual + timedelta(hours=1) <= fim:
                 atual = atual.replace(second=0, microsecond=0)
                 if not Appointment.objects.filter(
                     mechanic=mecanico,
                     appointment_datetime=atual
                 ).exists():
-                    horarios_livres.append(atual.strftime('%d/%m/%Y %H:%M'))
-                atual += timedelta(minutes=30)
+                    eventos.append({
+                        "title": "Disponível",
+                        "start": atual.isoformat(),
+                        "end": (atual + timedelta(hours=1)).isoformat(),
+                        "extendedProps": {
+                            "horario_formatado": atual.strftime('%d/%m/%Y %H:%M'),
+                        }
+                    })
+                atual += timedelta(hours=1)
 
-    return horarios_livres
+    return eventos

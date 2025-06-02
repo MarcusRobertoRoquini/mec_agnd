@@ -3,6 +3,9 @@
 <div class="container mt-4">
   <h2>Escolha um Mecânico para "{{ servico.nome }}"</h2>
 
+  <!-- CSRF Token escondido (será lido via JavaScript) -->
+  <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
   {% if mecanicos %}
     <div class="list-group">
       {% for mec in mecanicos %}
@@ -21,7 +24,7 @@
               data-mecanico-id="{{ mec.id }}">
               Ver horários disponíveis
             </button>
-            <div id="horarios-{{ mec.id }}" class="horarios mt-3" style="display:none;"></div>
+            <div id="calendar-{{ mec.id }}" style="display:none; margin-top: 20px;"></div>
           </div>
         </div>
       {% endfor %}
@@ -31,55 +34,78 @@
   {% endif %}
 </div>
 
+<!-- FullCalendar CSS e JS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
 <script>
 document.querySelectorAll('.ver-horarios').forEach(btn => {
   btn.addEventListener('click', () => {
     const mecanicoId = btn.getAttribute('data-mecanico-id');
-    const divHorarios = document.getElementById(`horarios-${mecanicoId}`);
+    const divCalendar = document.getElementById(`calendar-${mecanicoId}`);
 
+    // Oculta outros calendários
+    document.querySelectorAll('[id^="calendar-"]').forEach(div => {
+      if (div !== divCalendar) {
+        div.style.display = 'none';
+        div.innerHTML = '';
+      }
+    });
+
+    // Carrega horários via AJAX
     fetch(`/ajax/horarios-disponiveis/${mecanicoId}/`)
       .then(response => response.json())
-      .then(data => {
-        divHorarios.innerHTML = '';
-        if (data.horarios.length > 0) {
-          data.horarios.forEach(h => {
-            const button = document.createElement('button');
-            button.textContent = h;
-            button.classList.add('btn', 'btn-sm', 'btn-success', 'me-2', 'mb-2');
-            button.onclick = () => confirmarHorario(mecanicoId, h);
-            divHorarios.appendChild(button);
-          });
-        } else {
-          divHorarios.innerHTML = '<p class="text-danger">Sem horários disponíveis.</p>';
-        }
-        divHorarios.style.display = 'block';
+      .then(events => {
+        divCalendar.innerHTML = '';
+        divCalendar.style.display = 'block';
+
+        const calendar = new FullCalendar.Calendar(divCalendar, {
+          initialView: 'timeGridWeek',
+          locale: 'pt-br',
+          allDaySlot: false,
+          slotMinTime: "06:00:00",
+          slotMaxTime: "20:00:00",
+          slotDuration: "01:00:00",
+          nowIndicator: true,
+          height: "auto",
+          events: events,
+          eventClick: function(info) {
+            const horario = info.event.start.toISOString();
+            const dataFormatada = info.event.extendedProps.horario_formatado;
+
+            if (confirm(`Confirmar agendamento para ${dataFormatada}?`)) {
+              const form = document.createElement('form');
+              form.method = 'POST';
+              form.action = '/confirmar-agendamento/';
+
+              // Lê token CSRF do input oculto
+              const csrf = document.createElement('input');
+              csrf.type = 'hidden';
+              csrf.name = 'csrfmiddlewaretoken';
+              csrf.value = document.getElementById('csrf-token').value;
+
+              const inputHorario = document.createElement('input');
+              inputHorario.type = 'hidden';
+              inputHorario.name = 'horario';
+              inputHorario.value = horario;
+
+              const inputMecanico = document.createElement('input');
+              inputMecanico.type = 'hidden';
+              inputMecanico.name = 'mecanicoId';
+              inputMecanico.value = mecanicoId;
+
+              form.appendChild(csrf);
+              form.appendChild(inputHorario);
+              form.appendChild(inputMecanico);
+              document.body.appendChild(form);
+              form.submit();
+            }
+          }
+        });
+
+        calendar.render();
       });
   });
 });
-
-function confirmarHorario(mecanicoId, horario) {
-  if (confirm(`Confirmar agendamento para ${horario}?`)) {
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/confirmar-agendamento/`;
-    
-    const csrf = document.createElement('input');
-    csrf.type = 'hidden';
-    csrf.name = 'csrfmiddlewaretoken';
-    csrf.value = '{{ csrf_token }}';
-
-    ['mecanicoId', 'horario'].forEach(name => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = name;
-      input.value = eval(name);
-      form.appendChild(input);
-    });
-
-    form.appendChild(csrf);
-    document.body.appendChild(form);
-    form.submit();
-  }
-}
 </script>
 {% endblock %}
