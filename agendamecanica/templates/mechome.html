@@ -31,9 +31,7 @@
         <p><strong>Horários disponíveis:</strong></p>
         <ul>
             {% for dia, horas in horarios.items %}
-                <li><strong>{{ dia|title }}:</strong>
-                    {{ horas|join:", " }}
-                </li>
+                <li><strong>{{ dia|title }}:</strong> {{ horas|join:", " }}</li>
             {% empty %}
                 <li>Nenhum horário cadastrado.</li>
             {% endfor %}
@@ -48,7 +46,15 @@
                 <li>
                     {{ ag.appointment_datetime|time:"H:i" }} -
                     {{ ag.client.get_full_name }} ({{ ag.vehicle.marca }} {{ ag.vehicle.modelo }}, {{ ag.vehicle.placa }}) -
-                    Serviço: {{ ag.service.nome }}
+                    Serviço: {{ ag.service.nome }} -
+                    Status: {{ ag.get_status_display }}
+
+                    {% if ag.status == 'pendente' %}
+                        | <a href="{% url 'atualizar_status' ag.id 'em_analise' %}">Marcar como Em Análise</a>
+                    {% elif ag.status == 'em_analise' %}
+                        | <a href="{% url 'atualizar_status' ag.id 'concluido' %}">Concluir</a>
+                        | <a href="{% url 'criar_orcamento' ag.id %}">Criar Orçamento</a>
+                    {% endif %}
                 </li>
             {% empty %}
                 <li>Sem agendamentos para hoje.</li>
@@ -65,7 +71,10 @@
                 {% with agendamentos=agendamentos_semanal|dict_get:dia %}
                     {% if agendamentos %}
                         {% for ag in agendamentos %}
-                            <li>{{ ag.appointment_datetime|time:"H:i" }} - {{ ag.service.nome }}</li>
+                            <li>
+                                {{ ag.appointment_datetime|time:"H:i" }} - {{ ag.service.nome }} -
+                                Status: {{ ag.get_status_display }}
+                            </li>
                         {% endfor %}
                     {% else %}
                         <li>Sem agendamentos.</li>
@@ -98,8 +107,9 @@
         <ul>
             {% for orc in orcamentos_respondidos %}
                 <li>
-                    {{ orc.client.get_full_name }} - {{ orc.service.nome }} -
-                    <strong>Status:</strong> {{ orc.budget.get_status_display }}
+                    {{ orc.appointment.client.get_full_name }} -
+                    {{ orc.appointment.service.nome }} -
+                    <strong>Status:</strong> {{ orc.get_status_display }}
                 </li>
             {% empty %}
                 <li>Nenhum orçamento respondido ainda.</li>

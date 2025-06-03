@@ -1,14 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login
-from .forms import CustomUserCreationForm, EmailAuthenticationForm, MechanicForm, VehicleForm
-from .models import Mechanic, Service, ServiceHistory, Budget, Appointment, Vehicle, Category
+from .forms import CustomUserCreationForm, EmailAuthenticationForm, MechanicForm, VehicleForm, BudgetForm, BudgetItemForm
+from .models import Mechanic, Service, ServiceHistory, Budget, Appointment, Vehicle, Category, BudgetItem
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import timedelta, datetime
 from collections import defaultdict
 from django.contrib import messages
 from django.contrib.auth import get_backends
-
+from django.forms import modelformset_factory
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import get_backends
 from django.shortcuts import redirect, render
@@ -252,8 +252,9 @@ def selecionar_mecanico(request, veiculo_id, categoria_id, servico_id):
 @login_required
 def horarios_disponiveis(request, mecanico_id):
     mecanico = get_object_or_404(Mechanic, id=mecanico_id)
-    eventos = gerar_horarios_disponiveis(mecanico)
+    eventos = gerar_horarios_disponiveis(mecanico, dias_adiantados=30)
     return JsonResponse(eventos, safe=False)
+
 
 
 @login_required
@@ -326,4 +327,61 @@ def confirmar_agendamento(request):
     messages.success(request, "Agendamento confirmado com sucesso!")
     return render(request, 'confirmacao_agendamento.html', {
         'agendamento': agendamento
+    }) 
+
+@login_required
+def atualizar_status(request, agendamento_id, novo_status):
+    appointment = get_object_or_404(Appointment, id=agendamento_id)
+
+    # Verifica se o usuário é o mecânico responsável
+    if request.user != appointment.mechanic.user:
+        messages.error(request, "Você não tem permissão para alterar este agendamento.")
+        return redirect('mecanico_home')
+
+    if novo_status in dict(Appointment.STATUS_CHOICES):
+        appointment.status = novo_status
+        appointment.save()
+        messages.success(request, "Status atualizado com sucesso.")
+    else:
+        messages.error(request, "Status inválido.")
+
+    return redirect('mecanico_home')
+
+
+@login_required
+def criar_orcamento(request, appointment_id):
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+
+    if not hasattr(request.user, 'mechanic') or appointment.mechanic != request.user.mechanic:
+        messages.error(request, "Você não tem permissão para criar orçamento para este agendamento.")
+        return redirect('mecanico_home')
+
+    BudgetItemFormSet = modelformset_factory(BudgetItem, form=BudgetItemForm, extra=1, can_delete=True)
+
+    if request.method == 'POST':
+        form = BudgetForm(request.POST)
+        formset = BudgetItemFormSet(request.POST, queryset=BudgetItem.objects.none())
+
+        if form.is_valid() and formset.is_valid():
+            budget = form.save(commit=False)
+            budget.appointment = appointment
+            budget.status = 'enviado'
+            budget.save()
+
+            for item_form in formset:
+                if item_form.cleaned_data and not item_form.cleaned_data.get('DELETE'):
+                    item = item_form.save(commit=False)
+                    item.budget = budget
+                    item.save()
+
+            messages.success(request, "Orçamento criado e enviado ao cliente.")
+            return redirect('mecanico_home')
+    else:
+        form = BudgetForm()
+        formset = BudgetItemFormSet(queryset=BudgetItem.objects.none())
+
+    return render(request, 'criar_orcamento.html', {
+        'form': form,
+        'formset': formset,
+        'appointment': appointment
     })

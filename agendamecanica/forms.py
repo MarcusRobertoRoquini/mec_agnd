@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, Mechanic, Vehicle, Category
+from .models import User, Mechanic, Vehicle, Category, Budget, BudgetItem, Service
 from django.contrib.auth.forms import AuthenticationForm
 import datetime
+from django.forms import inlineformset_factory
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -55,3 +56,22 @@ class VehicleForm(forms.ModelForm):
             'min': 1900,
             'max': ano_atual + 1
         })
+
+
+class BudgetItemForm(forms.ModelForm):
+    class Meta:
+        model = BudgetItem
+        fields = ['servico', 'preco_personalizado']
+        widgets = {
+            'servico': forms.Select(attrs={'class': 'form-control'}),
+            'preco_personalizado': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+class BudgetForm(forms.ModelForm):
+    class Meta:
+        model = Budget
+        fields = ['descricao', 'total']
+        widgets = {
+            'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'total': forms.NumberInput(attrs={'class': 'form-control'}),
+        }

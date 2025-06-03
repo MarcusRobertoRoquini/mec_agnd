@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 from .models import Appointment
 
-def gerar_horarios_disponiveis(mecanico):
+def gerar_horarios_disponiveis(mecanico, dias_adiantados=30):
     hoje = datetime.now().date()
     eventos = []
 
@@ -16,7 +16,7 @@ def gerar_horarios_disponiveis(mecanico):
         'sunday': 'domingo'
     }
 
-    for i in range(7):
+    for i in range(dias_adiantados):
         dia = hoje + timedelta(days=i)
         nome_dia = dias_traduzidos.get(dia.strftime('%A').lower())
 
@@ -25,9 +25,9 @@ def gerar_horarios_disponiveis(mecanico):
 
         for intervalo in mecanico.available_hours[nome_dia]:
             inicio_str, fim_str = intervalo.split('-')
-            # Função auxiliar para converter string de horário
+
             def parse_horario(horario_str):
-                horario_str = horario_str.strip()  # <- ESSENCIAL
+                horario_str = horario_str.strip()
                 formatos = ["%H:%M", "%H:%M:%S"]
                 for fmt in formatos:
                     try:
@@ -36,10 +36,8 @@ def gerar_horarios_disponiveis(mecanico):
                         continue
                 raise ValueError(f"Formato de horário inválido: {horario_str}")
 
-
             inicio = datetime.combine(dia, parse_horario(inicio_str))
             fim = datetime.combine(dia, parse_horario(fim_str))
-
 
             atual = inicio
             while atual + timedelta(hours=1) <= fim:
@@ -59,3 +57,4 @@ def gerar_horarios_disponiveis(mecanico):
                 atual += timedelta(hours=1)
 
     return eventos
+

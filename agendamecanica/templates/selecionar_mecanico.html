@@ -60,48 +60,52 @@ document.querySelectorAll('.ver-horarios').forEach(btn => {
         divCalendar.style.display = 'block';
 
         const calendar = new FullCalendar.Calendar(divCalendar, {
-          initialView: 'timeGridWeek',
-          locale: 'pt-br',
-          allDaySlot: false,
-          slotMinTime: "06:00:00",
-          slotMaxTime: "20:00:00",
-          slotDuration: "01:00:00",
-          nowIndicator: true,
-          height: "auto",
-          events: events,
-          eventClick: function(info) {
-            const horario = info.event.start.toISOString();
-            const dataFormatada = info.event.extendedProps.horario_formatado;
+  initialView: 'timeGridWeek',
+  locale: 'pt-br',
+  allDaySlot: false,
+  slotMinTime: "06:00:00",
+  slotMaxTime: "20:00:00",
+  slotDuration: "01:00:00",
+  nowIndicator: true,
+  height: "auto",
+  events: events,
+  validRange: {
+    start: new Date().toISOString().split('T')[0],
+    end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  },
+  eventClick: function(info) {
+    const horario = info.event.start.toISOString();
+    const dataFormatada = info.event.extendedProps.horario_formatado;
 
-            if (confirm(`Confirmar agendamento para ${dataFormatada}?`)) {
-              const form = document.createElement('form');
-              form.method = 'POST';
-              form.action = '/confirmar-agendamento/';
+    if (confirm(`Confirmar agendamento para ${dataFormatada}?`)) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/confirmar-agendamento/';
 
-              // Lê token CSRF do input oculto
-              const csrf = document.createElement('input');
-              csrf.type = 'hidden';
-              csrf.name = 'csrfmiddlewaretoken';
-              csrf.value = document.getElementById('csrf-token').value;
+      const csrf = document.createElement('input');
+      csrf.type = 'hidden';
+      csrf.name = 'csrfmiddlewaretoken';
+      csrf.value = document.getElementById('csrf-token').value;
 
-              const inputHorario = document.createElement('input');
-              inputHorario.type = 'hidden';
-              inputHorario.name = 'horario';
-              inputHorario.value = horario;
+      const inputHorario = document.createElement('input');
+      inputHorario.type = 'hidden';
+      inputHorario.name = 'horario';
+      inputHorario.value = horario;
 
-              const inputMecanico = document.createElement('input');
-              inputMecanico.type = 'hidden';
-              inputMecanico.name = 'mecanicoId';
-              inputMecanico.value = mecanicoId;
+      const inputMecanico = document.createElement('input');
+      inputMecanico.type = 'hidden';
+      inputMecanico.name = 'mecanicoId';
+      inputMecanico.value = mecanicoId;
 
-              form.appendChild(csrf);
-              form.appendChild(inputHorario);
-              form.appendChild(inputMecanico);
-              document.body.appendChild(form);
-              form.submit();
-            }
-          }
-        });
+      form.appendChild(csrf);
+      form.appendChild(inputHorario);
+      form.appendChild(inputMecanico);
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+});
+
 
         calendar.render();
       });

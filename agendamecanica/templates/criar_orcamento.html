@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h2>Criar Orçamento</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    <h3>Informações gerais</h3>
+    {{ form.as_p }}
+
+    <h3>Itens do Orçamento</h3>
+    {{ formset.management_form }}
+    {% for form_item in formset %}
+        <div style="border: 1px solid #ccc; margin-bottom: 10px; padding: 10px;">
+            {{ form_item.as_p }}
+        </div>
+    {% endfor %}
+
+    <button type="submit">Enviar Orçamento</button>
+</form>
+
+<a href="{% url 'mecanico_home' %}">Cancelar</a>
+{% endblock %}
