@@ -139,7 +139,6 @@ class Appointment(models.Model):
         db_table = 'agendamentos'
         unique_together = ('mechanic', 'appointment_datetime')  # Evita sobreposição de horários para o mesmo mecânico
 
-
 class Budget(models.Model):
     STATUS_CHOICES = [
         ('enviado', 'Enviado'),
@@ -158,6 +157,11 @@ class Budget(models.Model):
         null=True,
         help_text="Descrição geral do orçamento ou observações do mecânico"
     )
+    nova_data_servico = models.DateField(
+        blank=True,
+        null=True,
+        help_text="Nova data sugerida para execução de serviços adicionais, se necessário"
+    )
     total = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -174,6 +178,13 @@ class Budget(models.Model):
 
     def __str__(self):
         return f"Orçamento para {self.appointment}"
+
+    def calcular_total(self):
+        return sum(item.preco_personalizado for item in self.itens.all())
+
+    def save(self, *args, **kwargs):
+        self.total = self.calcular_total()
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = 'orcamentos'
@@ -194,14 +205,13 @@ class BudgetItem(models.Model):
     preco_personalizado = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0)]
+        validators=[MinValueValidator(0)],
+        help_text="Preço específico para esse serviço/peça"
     )
 
     def __str__(self):
-        return f"{self.servico.nome} - R$ {self.preco_personalizado}"
+        return f"{self.servico.nome} - R${self.preco_personalizado}"
 
-    class Meta:
-        db_table = 'itens_orcamento'
 
 class ServiceHistory(models.Model):
     appointment = models.OneToOneField(

@@ -1,120 +1,130 @@
 {% load custom_tags %}
-
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <title>Área do Mecânico - AutoAgenda</title>
+    <link rel="stylesheet" href="{% static 'agendamecanica/css/mechome.css' %}">
 </head>
 <body>
-    <header>
-        <h1>Bem-vindo, {{ mecanico.user.first_name }}!</h1>
-        <form action="{% url 'login' %}" method="POST" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit">Logout</button>
-        </form>
-    </header>
-
-    <!-- Perfil do Mecânico -->
-    <section>
-        <h2>Perfil</h2>
-        <p><strong>Nome:</strong> {{ mecanico.user.get_full_name }}</p>
-        <p><strong>Email:</strong> {{ mecanico.user.email }}</p>
-        <p><strong>Telefone:</strong> {{ mecanico.user.telefone }}</p>
-
-        <p><strong>Especialidades:</strong>
-            {% for cat in especialidades %}
-                {{ cat.nome }}{% if not forloop.last %}, {% endif %}
-            {% endfor %}
-        </p>
-
-        <p><strong>Horários disponíveis:</strong></p>
-        <ul>
-            {% for dia, horas in horarios.items %}
-                <li><strong>{{ dia|title }}:</strong> {{ horas|join:", " }}</li>
-            {% empty %}
-                <li>Nenhum horário cadastrado.</li>
-            {% endfor %}
-        </ul>
-    </section>
-
-    <!-- Agendamentos do Dia -->
-    <section>
-        <h2>Agendamentos do Dia ({{ hoje }})</h2>
-        <ul>
-            {% for ag in agendamentos_hoje %}
-                <li>
-                    {{ ag.appointment_datetime|time:"H:i" }} -
-                    {{ ag.client.get_full_name }} ({{ ag.vehicle.marca }} {{ ag.vehicle.modelo }}, {{ ag.vehicle.placa }}) -
-                    Serviço: {{ ag.service.nome }} -
-                    Status: {{ ag.get_status_display }}
-
-                    {% if ag.status == 'pendente' %}
-                        | <a href="{% url 'atualizar_status' ag.id 'em_analise' %}">Marcar como Em Análise</a>
-                    {% elif ag.status == 'em_analise' %}
-                        | <a href="{% url 'atualizar_status' ag.id 'concluido' %}">Concluir</a>
-                        | <a href="{% url 'criar_orcamento' ag.id %}">Criar Orçamento</a>
-                    {% endif %}
-                </li>
-            {% empty %}
-                <li>Sem agendamentos para hoje.</li>
-            {% endfor %}
-        </ul>
-    </section>
-
-    <!-- Agenda da Semana -->
-    <section>
-        <h2>Agenda da Semana</h2>
-        {% for dia in semana %}
-            <h3>{{ dia|date:"l - d/m" }}</h3>
+ 
+    <!-- Container geral -->
+    <div class="container">
+       
+        <!-- Cabeçalho com saudação e logout -->
+        <header class="header">
+            <h1>Bem-vindo, {{ mecanico.user.first_name }}!</h1>
+            <form action="{% url 'login' %}" method="POST" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout">Logout</button>
+            </form>
+        </header>
+ 
+        <!-- Perfil do Mecânico -->
+        <section class="card">
+            <h2>Perfil</h2>
+            <p><strong>Nome:</strong> {{ mecanico.user.get_full_name }}</p>
+            <p><strong>Email:</strong> {{ mecanico.user.email }}</p>
+            <p><strong>Telefone:</strong> {{ mecanico.user.telefone }}</p>
+ 
+            <p><strong>Especialidades:</strong>
+                {% for cat in especialidades %}
+                    {{ cat.nome }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+ 
+            <p><strong>Horários disponíveis:</strong></p>
             <ul>
-                {% with agendamentos=agendamentos_semanal|dict_get:dia %}
-                    {% if agendamentos %}
-                        {% for ag in agendamentos %}
-                            <li>
-                                {{ ag.appointment_datetime|time:"H:i" }} - {{ ag.service.nome }} -
-                                Status: {{ ag.get_status_display }}
-                            </li>
-                        {% endfor %}
-                    {% else %}
-                        <li>Sem agendamentos.</li>
-                    {% endif %}
-                {% endwith %}
+                {% for dia, horas in horarios.items %}
+                    <li><strong>{{ dia|title }}:</strong> {{ horas|join:", " }}</li>
+                {% empty %}
+                    <li>Nenhum horário cadastrado.</li>
+                {% endfor %}
             </ul>
-        {% endfor %}
-    </section>
-
-    <!-- Histórico de Serviços -->
-    <section>
-        <h2>Histórico de Serviços Realizados</h2>
-        <ul>
-            {% for s in historico %}
-                <li>
-                    {{ s.data_realizacao|date:"d/m/Y" }} -
-                    {{ s.vehicle.placa }} -
-                    {{ s.service.nome }} -
-                    R$ {{ s.valor_cobrado }}
-                </li>
-            {% empty %}
-                <li>Você ainda não realizou serviços registrados.</li>
+        </section>
+ 
+        <!-- Agendamentos do Dia -->
+        <section class="card">
+            <h2>Agendamentos do Dia ({{ hoje }})</h2>
+            <ul>
+                {% for ag in agendamentos_hoje %}
+                    <li>
+                        {{ ag.appointment_datetime|time:"H:i" }} -
+                        {{ ag.client.get_full_name }} ({{ ag.vehicle.marca }} {{ ag.vehicle.modelo }}, {{ ag.vehicle.placa }}) -
+                        Serviço: {{ ag.service.nome }} -
+                        Status: {{ ag.get_status_display }}
+                       
+                        {% if ag.status == 'pendente' %}
+                            | <a href="{% url 'atualizar_status' ag.id 'em_analise' %}">Marcar como Em Análise</a>
+                        {% elif ag.status == 'em_analise' %}
+                            | <a href="{% url 'atualizar_status' ag.id 'concluido' %}">Concluir</a>
+                            | <a href="{% url 'criar_orcamento' ag.id %}">Criar Orçamento</a>
+                        {% endif %}
+                    </li>
+                {% empty %}
+                    <li>Sem agendamentos para hoje.</li>
+                {% endfor %}
+            </ul>
+        </section>
+ 
+        <!-- Agenda da Semana -->
+        <section class="card">
+            <h2>Agenda da Semana</h2>
+            {% for dia in semana %}
+                <h3>{{ dia|date:"l - d/m" }}</h3>
+                <ul>
+                    {% with agendamentos=agendamentos_semanal|dict_get:dia %}
+                        {% if agendamentos %}
+                            {% for ag in agendamentos %}
+                                <li>
+                                    {{ ag.appointment_datetime|time:"H:i" }} - {{ ag.service.nome }} -
+                                    Status: {{ ag.get_status_display }}
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <li>Sem agendamentos.</li>
+                        {% endif %}
+                    {% endwith %}
+                </ul>
             {% endfor %}
-        </ul>
-    </section>
-
-    <!-- Orçamentos Respondidos -->
-    <section>
-        <h2>Respostas de Orçamentos</h2>
-        <ul>
-            {% for orc in orcamentos_respondidos %}
-                <li>
-                    {{ orc.appointment.client.get_full_name }} -
-                    {{ orc.appointment.service.nome }} -
-                    <strong>Status:</strong> {{ orc.get_status_display }}
-                </li>
-            {% empty %}
-                <li>Nenhum orçamento respondido ainda.</li>
-            {% endfor %}
-        </ul>
-    </section>
+        </section>
+ 
+        <!-- Histórico de Serviços -->
+        <section class="card">
+            <h2>Histórico de Serviços Realizados</h2>
+            <ul>
+                {% for s in historico %}
+                    <li>
+                        {{ s.data_realizacao|date:"d/m/Y" }} -
+                        {{ s.vehicle.placa }} -
+                        {{ s.service.nome }} -
+                        R$ {{ s.valor_cobrado }}
+                    </li>
+                {% empty %}
+                    <li>Você ainda não realizou serviços registrados.</li>
+                {% endfor %}
+            </ul>
+        </section>
+ 
+        <!-- Orçamentos Respondidos -->
+        <section class="card">
+            <h2>Respostas de Orçamentos</h2>
+            <ul>
+                {% for orc in orcamentos_respondidos %}
+                    <li>
+                        {{ orc.appointment.client.get_full_name }} -
+                        {{ orc.appointment.service.nome }} -
+                        <strong>Status:</strong> {{ orc.get_status_display }}
+                    </li>
+                {% empty %}
+                    <li>Nenhum orçamento respondido ainda.</li>
+                {% endfor %}
+            </ul>
+        </section>
+ 
+    </div>
+ 
 </body>
 </html>
+ 

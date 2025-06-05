@@ -19,6 +19,7 @@ import json
 from django.utils.timezone import make_aware, is_naive
 from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_datetime
+from django.template.loader import render_to_string
 
 def register(request):
     if request.method == 'POST':
@@ -366,13 +367,17 @@ def criar_orcamento(request, appointment_id):
             budget = form.save(commit=False)
             budget.appointment = appointment
             budget.status = 'enviado'
-            budget.save()
+            budget.save()  # salva para criar o ID
 
             for item_form in formset:
                 if item_form.cleaned_data and not item_form.cleaned_data.get('DELETE'):
                     item = item_form.save(commit=False)
                     item.budget = budget
                     item.save()
+
+            # Atualiza total agora com os itens salvos
+            budget.total = budget.calcular_total()
+            budget.save()
 
             messages.success(request, "Orçamento criado e enviado ao cliente.")
             return redirect('mecanico_home')
@@ -385,3 +390,17 @@ def criar_orcamento(request, appointment_id):
         'formset': formset,
         'appointment': appointment
     })
+
+@login_required
+def ver_orcamento(request, appointment_id):
+    appointment = get_object_or_404(Appointment, id=appointment_id)
+
+    # Verifica se o orçamento existe
+    if hasattr(appointment, 'budget'):
+        budget = appointment.budget
+        html = render_to_string('partials/orcamento_detalhado.html', {
+            'orcamento': budget,
+        }, request=request)
+        return JsonResponse({'html': html})
+    else:
+        return JsonResponse({'html': '<p>Orçamento ainda não disponível.</p>'})

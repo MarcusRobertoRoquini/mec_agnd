@@ -1,0 +1,208 @@
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #1F2937;
+    color: #FFFFFF;
+}
+ 
+main {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #111827;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+}
+ 
+/* ===== Título principal ===== */
+h2 {
+    text-align: center;
+    color: #F97316;
+    margin-bottom: 2rem;
+}
+ 
+/* ===== Fieldsets ===== */
+fieldset {
+    border: 1px solid #374151;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    background-color: #1F2937;
+    transition: background-color 0.3s, transform 0.2s;
+}
+ 
+fieldset:hover {
+    background-color: #2a3444;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+ 
+legend {
+    font-size: 1.2rem;
+    color: #F97316;
+    font-weight: 600;
+    padding: 0 0.5rem;
+}
+ 
+/* ===== Especialidades (checkboxes) ===== */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+ 
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    color: #D1D5DB;
+}
+ 
+.form-group input[type="checkbox"] {
+    accent-color: #F97316;
+    width: 18px;
+    height: 18px;
+}
+ 
+/* ===== Help Text e Erros ===== */
+small {
+    color: #9CA3AF;
+    font-size: 0.85rem;
+}
+ 
+.error {
+    color: #F87171;
+    font-size: 0.9rem;
+}
+ 
+/* ===== Horários por Dia ===== */
+.dia-bloco {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: #111827;
+    border: 1px solid #374151;
+    transition: background-color 0.3s ease;
+}
+ 
+.dia-bloco:hover {
+    background-color: #2a3444;
+}
+ 
+.dia-bloco label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #F97316;
+    display: block;
+}
+ 
+.horarios-dia {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+ 
+.horarios-dia input[type="time"] {
+    background-color: #374151;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem;
+    width: 120px;
+}
+ 
+.horarios-dia input[type="time"]:focus {
+    outline: 2px solid #F97316;
+}
+ 
+/* ===== Botão de adicionar horário ===== */
+.horarios-dia button {
+    background-color: #F97316;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+ 
+.horarios-dia button:hover {
+    background-color: #ea580c;
+    transform: scale(1.05);
+}
+ 
+/* ===== Lista de horários adicionados ===== */
+ul.lista-horarios {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 0.5rem;
+}
+ 
+ul.lista-horarios li {
+    margin-bottom: 0.4rem;
+    background-color: #1F2937;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #374151;
+    font-size: 0.95rem;
+}
+ 
+/* Botão remover (x) */
+ul.lista-horarios button {
+    background-color: transparent;
+    color: #F87171;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-left: 0.5rem;
+    transition: color 0.2s;
+}
+ 
+ul.lista-horarios button:hover {
+    color: #ff4d4d;
+}
+ 
+/* ===== Botão principal ===== */
+button[type="submit"] {
+    background-color: #F97316;
+    color: #fff;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: block;
+    margin: 1.5rem auto 0 auto;
+}
+ 
+button[type="submit"]:hover {
+    background-color: #EA580C;
+    transform: translateY(-2px);
+}
+ 
+/* ===== Link inferior ===== */
+p {
+    text-align: center;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+}
+ 
+a {
+    color: #F97316;
+    text-decoration: none;
+}
+ 
+a:hover {
+    text-decoration: underline;
+    color: #EA580C;
+}

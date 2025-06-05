@@ -1,24 +1,86 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block content %}
-<h2>Criar Orçamento</h2>
+<div class="container mt-5">
+    <h2 class="mb-4">Criar Orçamento para o Agendamento #{{ appointment.id }}</h2>
 
-<form method="POST">
-    {% csrf_token %}
-    <h3>Informações gerais</h3>
-    {{ form.as_p }}
-
-    <h3>Itens do Orçamento</h3>
-    {{ formset.management_form }}
-    {% for form_item in formset %}
-        <div style="border: 1px solid #ccc; margin-bottom: 10px; padding: 10px;">
-            {{ form_item.as_p }}
+    <form method="POST" novalidate>
+        {% csrf_token %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Informações Gerais do Orçamento</strong>
+            </div>
+            <div class="card-body">
+                {{ form.non_field_errors }}
+                <div class="mb-3">
+                    {{ form.descricao.label_tag }}
+                    {{ form.descricao }}
+                    {{ form.descricao.errors }}
+                </div>
+                <div class="mb-3">
+                    {{ form.total.label_tag }}
+                    {{ form.total }}
+                    {{ form.total.errors }}
+                </div>
+            </div>
         </div>
-    {% endfor %}
 
-    <button type="submit">Enviar Orçamento</button>
-</form>
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Itens do Orçamento</strong>
+            </div>
+            <div class="card-body">
+                {{ formset.management_form }}
+                {% for form_item in formset %}
+                    <div class="border p-3 mb-3">
+                        {{ form_item.non_field_errors }}
 
-<a href="{% url 'mecanico_home' %}">Cancelar</a>
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form_item.servico.label_tag }}
+                                {{ form_item.servico }}
+                                {{ form_item.servico.errors }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form_item.preco_personalizado.label_tag }}
+                                {{ form_item.preco_personalizado }}
+                                {{ form_item.preco_personalizado.errors }}
+                            </div>
+                            <div class="col-md-2">
+                                {% if formset.can_delete %}
+                                    <label>Remover</label><br>
+                                    {{ form_item.DELETE }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <div class="text-end">
+                    <button type="button" class="btn btn-outline-primary" id="add-form">+ Adicionar item</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-end">
+            <button type="submit" class="btn btn-success">Salvar e Enviar Orçamento</button>
+            <a href="{% url 'mecanico_home' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Lógica para clonar o último form do formset e adicionar dinamicamente
+    document.getElementById('add-form').addEventListener('click', function () {
+        const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
+        const currentFormCount = parseInt(totalForms.value);
+        const formsetContainer = totalForms.closest('form');
+        const allForms = formsetContainer.querySelectorAll('[id^="form-"]');
+        const lastForm = allForms[allForms.length - 1];
+        const newFormHtml = lastForm.outerHTML.replace(/form-(\d)+/g, 'form-' + currentFormCount);
+        lastForm.insertAdjacentHTML('afterend', newFormHtml);
+        totalForms.value = currentFormCount + 1;
+    });
+</script>
 {% endblock %}

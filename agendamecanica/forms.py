@@ -4,6 +4,7 @@ from .models import User, Mechanic, Vehicle, Category, Budget, BudgetItem, Servi
 from django.contrib.auth.forms import AuthenticationForm
 import datetime
 from django.forms import inlineformset_factory
+from django.forms import modelformset_factory
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -58,20 +59,48 @@ class VehicleForm(forms.ModelForm):
         })
 
 
-class BudgetItemForm(forms.ModelForm):
-    class Meta:
-        model = BudgetItem
-        fields = ['servico', 'preco_personalizado']
-        widgets = {
-            'servico': forms.Select(attrs={'class': 'form-control'}),
-            'preco_personalizado': forms.NumberInput(attrs={'class': 'form-control'}),
-        }
-
 class BudgetForm(forms.ModelForm):
     class Meta:
         model = Budget
         fields = ['descricao', 'total']
         widgets = {
-            'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'total': forms.NumberInput(attrs={'class': 'form-control'}),
+            'descricao': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Descrição geral ou observações do mecânico...'
+            }),
+            'total': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Valor total do orçamento'
+            }),
         }
+        labels = {
+            'descricao': 'Descrição',
+            'total': 'Valor Total (R$)',
+        }
+
+class BudgetItemForm(forms.ModelForm):
+    class Meta:
+        model = BudgetItem
+        fields = ['servico', 'preco_personalizado']
+        widgets = {
+            'servico': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'preco_personalizado': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Preço personalizado (opcional)'
+            }),
+        }
+        labels = {
+            'servico': 'Serviço',
+            'preco_personalizado': 'Preço Personalizado (R$)',
+        }
+
+# Caso queira usar como FormSet fora da view
+BudgetItemFormSet = modelformset_factory(
+    BudgetItem,
+    form=BudgetItemForm,
+    extra=1,
+    can_delete=True
+)

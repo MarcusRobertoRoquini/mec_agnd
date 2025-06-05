@@ -1,0 +1,221 @@
+/* Corpo da página */
+body {
+    background-color: #1F2937;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #FFFFFF;
+}
+ 
+/* Cabeçalho */
+h1 {
+    color: #F97316;
+    text-align: center;
+    margin-top: 2rem;
+}
+ 
+/* Seções principais */
+section {
+    background-color: #111827;
+    margin: 2rem auto;
+    padding: 2rem;
+    border-radius: 10px;
+    max-width: 800px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+ 
+/* Efeito hover nas seções */
+section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+ 
+/* Títulos das seções */
+section h2 {
+    color: #F97316;
+    border-bottom: 2px solid #374151;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+ 
+/* Parágrafos de texto */
+p {
+    color: #D1D5DB;
+    margin: 0.5rem 0;
+}
+ 
+/* Listas */
+ul {
+    padding-left: 1.5rem;
+}
+ 
+ul li {
+    margin-bottom: 0.75rem;
+}
+ 
+/* Links padrão */
+a {
+    color: #F97316;
+    text-decoration: none;
+}
+ 
+a:hover {
+    color: #ea580c;
+    text-decoration: underline;
+}
+ 
+/* Links que funcionam como botões */
+a.btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    background-color: #F97316;
+    color: #FFFFFF;
+    border-radius: 6px;
+    margin-top: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+ 
+a.btn:hover {
+    background-color: #ea580c;
+}
+ 
+/* Estilização de inputs (caso você venha a usar) */
+input, select, textarea {
+    background-color: #374151;
+    color: #FFFFFF;
+    border: none;
+    padding: 0.6rem;
+    border-radius: 6px;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+ 
+/* Mensagens de erro */
+.error {
+    color: #f87171;
+    font-weight: bold;
+    margin-top: 1rem;
+}
+/* Corpo da página */
+body {
+    background-color: #1F2937;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #FFFFFF;
+}
+ 
+/* Cabeçalho */
+h1 {
+    color: #F97316;
+    text-align: center;
+    margin-top: 2rem;
+}
+ 
+/* Seções principais */
+section.section {
+    background-color: #111827;
+    margin: 2rem auto;
+    padding: 2rem;
+    border-radius: 10px;
+    max-width: 800px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+ 
+/* Efeito hover nas seções */
+section.section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+ 
+/* Títulos das seções */
+section h2 {
+    color: #F97316;
+    border-bottom: 2px solid #374151;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+ 
+/* Parágrafos de texto */
+p {
+    color: #D1D5DB;
+    margin: 0.5rem 0;
+}
+ 
+/* Listas */
+ul {
+    padding-left: 1.5rem;
+}
+ 
+ul li {
+    margin-bottom: 0.75rem;
+}
+ 
+/* Links padrão */
+a {
+    color: #F97316;
+    text-decoration: none;
+}
+ 
+a:hover {
+    color: #ea580c;
+    text-decoration: underline;
+}
+ 
+/* Links que funcionam como botões */
+a.btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    background-color: #F97316;
+    color: #FFFFFF;
+    border-radius: 6px;
+    margin-top: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+ 
+a.btn:hover {
+    background-color: #ea580c;
+}
+ 
+/* Estilização de inputs (caso você venha a usar) */
+input, select, textarea {
+    background-color: #374151;
+    color: #FFFFFF;
+    border: none;
+    padding: 0.6rem;
+    border-radius: 6px;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+ 
+/* Mensagens de erro */
+.error {
+    color: #f87171;
+    font-weight: bold;
+    margin-top: 1rem;
+}
+/* Seção Agendamentos */
+section.section .list-group-item {
+    background-color: #2a3444;  /* Cor mais escura para o fundo das listas */
+    border: 1px solid #374151;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    color: #FFFFFF;  /* Garantir que o texto tenha uma cor mais forte */
+    border-radius: 8px;
+}
+ 
+section.section .list-group-item p {
+    color: #D1D5DB; /* Usar uma cor mais clara para os parágrafos */
+}
+ 
+/* Efeito hover nas listagens */
+section.section .list-group-item:hover {
+    background-color: #3b4a5d; /* Um tom mais escuro para o efeito hover */
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+ 

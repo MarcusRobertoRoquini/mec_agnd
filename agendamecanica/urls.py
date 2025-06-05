@@ -25,6 +25,8 @@ urlpatterns = [
     # Novas rotas:
     path('atualizar-status/<int:agendamento_id>/<str:novo_status>/', views.atualizar_status, name='atualizar_status'),
     path('mecanico/orcamento/<int:appointment_id>/criar/', views.criar_orcamento, name='criar_orcamento'),
+    path('ver_orcamento/<int:appointment_id>/', views.ver_orcamento, name='ver_orcamento'),
+
 
 ]
 
