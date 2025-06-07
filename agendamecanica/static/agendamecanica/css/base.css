@@ -1,0 +1,102 @@
+body {
+  background-color: #1F2937;
+  color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Navbar */
+.custom-navbar {
+  background-color: #111827 !important;
+  border-bottom: 1px solid #374151;
+  padding: 0.8rem 1.5rem;
+}
+
+.navbar-brand {
+  font-weight: 600;
+  font-size: 1.4rem;
+  color: #F97316 !important;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-brand:hover {
+  color: #EA580C !important;
+}
+
+/* Logo */
+.logo-navbar {
+  height: 60px; /* ⬅️ Aumente aqui se quiser, ex: 48px, 56px */
+  width: auto;
+  margin-right: 0.6rem;
+}
+
+/* Engrenagem */
+.gear-spinner {
+  animation: spin 2s linear infinite;
+  transform-origin: center;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Frase rotativa (estilo 5) */
+.rotating-text {
+  color: #F97316;
+  font-size: 0.95rem;
+  font-style: italic;
+  transition: opacity 0.4s ease-in-out;
+  opacity: 1;
+}
+
+@keyframes fadeText {
+  0% { content: "Seu tempo vale ouro"; opacity: 1; }
+  25% { opacity: 0; }
+  26% { content: "Agende com facilidade"; opacity: 1; }
+  50% { opacity: 0; }
+  51% { content: "Mantenha seu carro em dia"; opacity: 1; }
+  75% { opacity: 0; }
+  76% { content: "Serviço com qualidade"; opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* Conteúdo */
+main {
+  background-color: #1F2937;
+  padding-top: 2rem;
+  min-height: 80vh;
+}
+
+/* Rodapé */
+.custom-footer {
+  background-color: #111827;
+  color: #D1D5DB;
+  border-top: 1px solid #374151;
+  font-size: 0.875rem;
+}
+
+/* Links */
+a {
+  color: #F97316;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #EA580C;
+  text-decoration: underline;
+}
+
+/* Botões padrão */
+.btn-primary {
+  background-color: #F97316;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #EA580C;
+}

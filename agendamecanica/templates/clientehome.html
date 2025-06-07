@@ -8,27 +8,28 @@
     <link rel="stylesheet" href="{% static 'agendamecanica/css/clientehome.css' %}">
 </head>
 <body class="container mt-4">
-    <!-- Botão de logout -->
+
+    <!-- Cabeçalho com Logout -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Bem-vindo, {{ cliente.first_name }}!</h1>
-        <a href="{% url 'login' %}" class="btn btn-outline-danger">Sair</a>
+        <a href="{% url 'logout' %}" class="btn btn-outline-danger">Sair</a>
     </div>
- 
+
     <!-- Seção Perfil -->
     <section class="section mb-4">
         <h2>Perfil</h2>
-        <p>Nome: {{ cliente.get_full_name }}</p>
-        <p>Email: {{ cliente.email }}</p>
-        <p>Telefone: {{ cliente.telefone }}</p>
+        <p><strong>Nome:</strong> {{ cliente.get_full_name }}</p>
+        <p><strong>Email:</strong> {{ cliente.email }}</p>
+        <p><strong>Telefone:</strong> {{ cliente.telefone }}</p>
     </section>
- 
+
     <!-- Seção Veículos -->
     <section class="section mb-4">
         <h2>Meus Veículos</h2>
         <ul>
             {% for v in veiculos %}
                 <li>
-                    {{ v.marca }}, {{ v.modelo }}, ({{ v.placa }}) -
+                    {{ v.marca }} {{ v.modelo }} ({{ v.placa }}) -
                     <a href="{% url 'editar_veiculo' v.id %}">Editar</a>
                 </li>
             {% empty %}
@@ -37,7 +38,7 @@
         </ul>
         <a href="{% url 'adicionar_veiculo' %}" class="btn btn-sm btn-primary mt-2">Adicionar novo veículo</a>
     </section>
- 
+
     <!-- Seção Agendamentos -->
     <section class="section mb-4">
         <h2>Meus Agendamentos</h2>
@@ -64,41 +65,38 @@
             <p class="text-muted">Você ainda não possui agendamentos.</p>
         {% endif %}
     </section>
- 
-    <!-- Seção Histórico de Serviços -->
-    <section class="section mb-4">
-        <h2>Histórico de Serviços</h2>
-        <ul>
-            {% for h in historico %}
-                <li>{{ h.service.nome }} - {{ h.data_realizacao }} - R$ {{ h.valor_cobrado }}</li>
-            {% empty %}
-                <li>Nenhum serviço realizado ainda.</li>
-            {% endfor %}
-        </ul>
-    </section>
- 
+
     <!-- Seção Orçamentos -->
     <section class="section mb-4">
         <h2>Orçamentos Recebidos</h2>
-        <ul>
-            {% for o in orcamentos %}
-                <li>
-                    <strong>{{ o.appointment.service.nome }}</strong> em {{ o.appointment.appointment_datetime|date:"d/m/Y" }} -
-                    R$ {{ o.total }} ({{ o.get_status_display }})
-                    <p>{{ o.descricao }}</p>
-                </li>
-            {% empty %}
-                <li>Nenhum orçamento disponível ainda.</li>
-            {% endfor %}
-        </ul>
+        {% if orcamentos %}
+            <ul class="list-group">
+                {% for o in orcamentos %}
+                    <li class="list-group-item">
+                        <strong>{{ o.appointment.service.nome }}</strong> em {{ o.appointment.appointment_datetime|date:"d/m/Y" }}<br>
+                        Valor: R$ {{ o.total }} <span class="badge bg-secondary">{{ o.get_status_display }}</span>
+                        {% if o.descricao %}
+                            <p class="mt-1">{{ o.descricao }}</p>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">Nenhum orçamento disponível ainda.</p>
+        {% endif %}
     </section>
- 
+
+    <!-- Seção Histórico de Serviços -->
+    <section class="section mb-4">
+        <h2>Histórico de Serviços</h2>
+        <a href="{% url 'historico_cliente' %}" class="btn btn-outline-primary">Ver Histórico Completo</a>
+    </section>
+
     <!-- Seção Agendamento -->
     <section class="section mb-4">
         <h2>Solicitar Serviço</h2>
         <a href="{% url 'iniciar_agendamento' %}" class="btn btn-success">Agendar novo serviço</a>
     </section>
- 
+
 </body>
 </html>
- 

@@ -18,11 +18,6 @@
                     {{ form.descricao }}
                     {{ form.descricao.errors }}
                 </div>
-                <div class="mb-3">
-                    {{ form.total.label_tag }}
-                    {{ form.total }}
-                    {{ form.total.errors }}
-                </div>
             </div>
         </div>
 
@@ -32,30 +27,32 @@
             </div>
             <div class="card-body">
                 {{ formset.management_form }}
-                {% for form_item in formset %}
-                    <div class="border p-3 mb-3">
-                        {{ form_item.non_field_errors }}
+                <div id="formset-container">
+                    {% for form_item in formset %}
+                        <div class="border p-3 mb-3 form-item">
+                            {{ form_item.non_field_errors }}
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                {{ form_item.servico.label_tag }}
-                                {{ form_item.servico }}
-                                {{ form_item.servico.errors }}
-                            </div>
-                            <div class="col-md-4">
-                                {{ form_item.preco_personalizado.label_tag }}
-                                {{ form_item.preco_personalizado }}
-                                {{ form_item.preco_personalizado.errors }}
-                            </div>
-                            <div class="col-md-2">
-                                {% if formset.can_delete %}
-                                    <label>Remover</label><br>
-                                    {{ form_item.DELETE }}
-                                {% endif %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form_item.servico.label_tag }}
+                                    {{ form_item.servico }}
+                                    {{ form_item.servico.errors }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ form_item.preco_personalizado.label_tag }}
+                                    {{ form_item.preco_personalizado }}
+                                    {{ form_item.preco_personalizado.errors }}
+                                </div>
+                                <div class="col-md-2">
+                                    {% if formset.can_delete %}
+                                        <label>Remover</label><br>
+                                        {{ form_item.DELETE }}
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                {% endfor %}
+                    {% endfor %}
+                </div>
 
                 <div class="text-end">
                     <button type="button" class="btn btn-outline-primary" id="add-form">+ Adicionar item</button>
@@ -63,24 +60,55 @@
             </div>
         </div>
 
-        <div class="text-end">
+        <div class="text-end mb-4">
             <button type="submit" class="btn btn-success">Salvar e Enviar Orçamento</button>
             <a href="{% url 'mecanico_home' %}" class="btn btn-secondary">Cancelar</a>
         </div>
     </form>
 </div>
 
+<!-- AutoNumeric (formatação de moeda brasileira) -->
+<script src="https://cdn.jsdelivr.net/npm/autonumeric@4.6.0/dist/autoNumeric.min.js"></script>
+
 <script>
-    // Lógica para clonar o último form do formset e adicionar dinamicamente
+    // Inicializar AutoNumeric para todos os campos de preço
+    function initAutoNumeric() {
+        AutoNumeric.multiple('.money-input', {
+            currencySymbol: 'R$ ',
+            decimalCharacter: ',',
+            digitGroupSeparator: '.',
+            decimalPlaces: 2,
+            unformatOnSubmit: true
+        });
+    }
+
+    // Adicionar novo item ao formset
     document.getElementById('add-form').addEventListener('click', function () {
         const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
         const currentFormCount = parseInt(totalForms.value);
-        const formsetContainer = totalForms.closest('form');
-        const allForms = formsetContainer.querySelectorAll('[id^="form-"]');
-        const lastForm = allForms[allForms.length - 1];
-        const newFormHtml = lastForm.outerHTML.replace(/form-(\d)+/g, 'form-' + currentFormCount);
-        lastForm.insertAdjacentHTML('afterend', newFormHtml);
+        const container = document.getElementById('formset-container');
+        const lastForm = container.querySelector('.form-item:last-of-type');
+        const newForm = lastForm.cloneNode(true);
+
+        newForm.querySelectorAll('input, select, textarea').forEach(function (el) {
+            const name = el.getAttribute('name').replace(/-\d+-/, '-' + currentFormCount + '-');
+            const id = 'id_' + name;
+            el.setAttribute('name', name);
+            el.setAttribute('id', id);
+            if (el.type !== 'hidden') el.value = '';
+        });
+
+        // Corrigir form-id nos elementos internos
+        newForm.innerHTML = newForm.innerHTML.replace(/form-(\d)+/g, 'form-' + currentFormCount);
+        container.appendChild(newForm);
         totalForms.value = currentFormCount + 1;
+
+        // Reaplica formatação AutoNumeric ao novo campo
+        initAutoNumeric();
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initAutoNumeric();
     });
 </script>
 {% endblock %}

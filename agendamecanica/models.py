@@ -91,6 +91,10 @@ class Mechanic(models.Model):
         help_text="Selecione as categorias em que o mecânico é especializado."
     )
     available_hours = models.JSONField(default=dict)
+    is_approved = models.BooleanField(
+        default=False,
+        help_text="Apenas mecânicos aprovados aparecerão para agendamento e poderão prestar serviços."
+    )
     criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -99,6 +103,7 @@ class Mechanic(models.Model):
     class Meta:
         db_table = 'mecanicos'
         ordering = ['-criado_em']
+
 
 
 class Appointment(models.Model):
@@ -114,22 +119,30 @@ class Appointment(models.Model):
         related_name='appointments'
     )
     mechanic = models.ForeignKey(
-        'Mechanic',  # Referência para o modelo Mechanic
+        'Mechanic',
         on_delete=models.RESTRICT,
         related_name='appointments'
     )
     service = models.ForeignKey(
-        'Service',  # Referência para o modelo Service
+        'Service',
         on_delete=models.RESTRICT,
         related_name='appointments'
     )
     vehicle = models.ForeignKey(
-        'Vehicle',  # Referência para o modelo Vehicle
+        'Vehicle',
         on_delete=models.RESTRICT,
         related_name='appointments'
     )
     appointment_datetime = models.DateTimeField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    preco_final = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        blank=True,
+        null=True,
+        help_text="Valor final cobrado pelo serviço (caso não haja orçamento)"
+    )
     criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -137,7 +150,8 @@ class Appointment(models.Model):
 
     class Meta:
         db_table = 'agendamentos'
-        unique_together = ('mechanic', 'appointment_datetime')  # Evita sobreposição de horários para o mesmo mecânico
+        unique_together = ('mechanic', 'appointment_datetime')
+
 
 class Budget(models.Model):
     STATUS_CHOICES = [
@@ -149,30 +163,26 @@ class Budget(models.Model):
     appointment = models.OneToOneField(
         'Appointment',
         on_delete=models.CASCADE,
-        related_name='budget',
-        help_text="Agendamento relacionado ao orçamento"
+        related_name='budget'
     )
     descricao = models.TextField(
         blank=True,
-        null=True,
-        help_text="Descrição geral do orçamento ou observações do mecânico"
+        null=True
     )
     nova_data_servico = models.DateField(
         blank=True,
         null=True,
-        help_text="Nova data sugerida para execução de serviços adicionais, se necessário"
+        help_text="Nova data sugerida para execução de serviços adicionais"
     )
     total = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0)],
-        help_text="Valor total do orçamento"
+        validators=[MinValueValidator(0)]
     )
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='enviado',
-        help_text="Status atual do orçamento"
+        default='enviado'
     )
     criado_em = models.DateTimeField(auto_now_add=True)
 
@@ -182,9 +192,14 @@ class Budget(models.Model):
     def calcular_total(self):
         return sum(item.preco_personalizado for item in self.itens.all())
 
+    @property
+    def total_estimado(self):
+        return self.calcular_total()
+
     def save(self, *args, **kwargs):
-        self.total = self.calcular_total()
         super().save(*args, **kwargs)
+        self.total = self.calcular_total()
+        super().save(update_fields=["total"])
 
     class Meta:
         db_table = 'orcamentos'
@@ -205,13 +220,11 @@ class BudgetItem(models.Model):
     preco_personalizado = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0)],
-        help_text="Preço específico para esse serviço/peça"
+        validators=[MinValueValidator(0)]
     )
 
     def __str__(self):
-        return f"{self.servico.nome} - R${self.preco_personalizado}"
-
+        return f"{self.servico.nome} - R${{self.preco_personalizado}}"
 
 class ServiceHistory(models.Model):
     appointment = models.OneToOneField(

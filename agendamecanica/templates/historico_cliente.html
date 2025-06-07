@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Histórico de Serviços</h2>
+    <hr>
+
+    {% if historicos %}
+        <table class="table table-bordered mt-3">
+            <thead class="table-light">
+                <tr>
+                    <th>Data</th>
+                    <th>Veículo</th>
+                    <th>Serviço</th>
+                    <th>Mecânico</th>
+                    <th>Valor</th>
+                    <th>Observações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in historicos %}
+                <tr>
+                    <td>{{ h.data_realizacao }}</td>
+                    <td>{{ h.vehicle }}</td>
+                    <td>{{ h.service.nome }}</td>
+                    <td>{{ h.mechanic.user.get_full_name }}</td>
+                    <td>R$ {{ h.valor_cobrado|floatformat:2 }}</td>
+                    <td>{{ h.observacoes|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="alert alert-info mt-3">
+            Nenhum serviço realizado até o momento.
+        </div>
+    {% endif %}
+
+    <a href="{% url 'cliente_home' %}" class="btn btn-secondary mt-3">← Voltar para a Home</a>
+</div>
+{% endblock %}

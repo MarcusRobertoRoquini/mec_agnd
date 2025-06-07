@@ -1,0 +1,68 @@
+<div class="card mb-4">
+    <div class="card-header">
+        <h4>Orçamento #{{ budget.id }}</h4>
+    </div>
+    <div class="card-body">
+        <p><strong>Descrição:</strong></p>
+        <p>{{ budget.descricao|linebreaksbr }}</p>
+
+        <hr>
+
+        <h5>Itens do Orçamento</h5>
+        <table class="table table-bordered mt-3">
+            <thead>
+                <tr>
+                    <th>Serviço / Peça</th>
+                    <th>Categoria</th>
+                    <th>Preço (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in budget.itens.all %}
+                    <tr>
+                        <td>{{ item.servico.nome }}</td>
+                        <td>{{ item.servico.category.nome }}</td>
+                        <td>
+                            {% if item.preco_personalizado %}
+                                {{ item.preco_personalizado|floatformat:2 }}
+                            {% else %}
+                                {{ item.servico.preco|floatformat:2 }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="3">Nenhum item foi adicionado a este orçamento.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="2" class="text-end">Total</th>
+                    <th>
+                        R$ {{ budget.total|floatformat:2 }}
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+
+        {% if modo_cliente %}
+            <div class="text-end mt-3">
+                {% if budget.status == 'enviado' %}
+                    <form method="post" action="{% url 'responder_orcamento' budget.id 'aceitar' %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">Aceitar Orçamento</button>
+                    </form>
+                    <form method="post" action="{% url 'responder_orcamento' budget.id 'recusar' %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Recusar Orçamento</button>
+                    </form>
+                {% else %}
+                    <div class="alert alert-info">
+                        Este orçamento foi <strong>{{ budget.get_status_display }}</strong>.
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
