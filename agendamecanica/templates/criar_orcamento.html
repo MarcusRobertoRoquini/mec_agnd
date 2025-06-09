@@ -29,9 +29,9 @@
                 {{ formset.management_form }}
                 <div id="formset-container">
                     {% for form_item in formset %}
-                        <div class="border p-3 mb-3 form-item">
+                        <div class="border p-3 mb-3 form-item" data-form-index="{{ forloop.counter0 }}">
+                            {{ form_item.id }}
                             {{ form_item.non_field_errors }}
-
                             <div class="row">
                                 <div class="col-md-6">
                                     {{ form_item.servico.label_tag }}
@@ -67,11 +67,9 @@
     </form>
 </div>
 
-<!-- AutoNumeric (formatação de moeda brasileira) -->
 <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.6.0/dist/autoNumeric.min.js"></script>
 
 <script>
-    // Inicializar AutoNumeric para todos os campos de preço
     function initAutoNumeric() {
         AutoNumeric.multiple('.money-input', {
             currencySymbol: 'R$ ',
@@ -82,7 +80,6 @@
         });
     }
 
-    // Adicionar novo item ao formset
     document.getElementById('add-form').addEventListener('click', function () {
         const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
         const currentFormCount = parseInt(totalForms.value);
@@ -90,20 +87,29 @@
         const lastForm = container.querySelector('.form-item:last-of-type');
         const newForm = lastForm.cloneNode(true);
 
+        // Atualiza os atributos name e id
         newForm.querySelectorAll('input, select, textarea').forEach(function (el) {
-            const name = el.getAttribute('name').replace(/-\d+-/, '-' + currentFormCount + '-');
-            const id = 'id_' + name;
-            el.setAttribute('name', name);
-            el.setAttribute('id', id);
-            if (el.type !== 'hidden') el.value = '';
+            const name = el.getAttribute('name');
+            if (!name) return;
+
+            const newName = name.replace(/-\d+-/, '-' + currentFormCount + '-');
+            const newId = 'id_' + newName;
+            el.setAttribute('name', newName);
+            el.setAttribute('id', newId);
+
+            if (el.type === 'text' || el.tagName === 'SELECT') {
+                el.value = '';
+            }
+
+            if (el.type === 'checkbox') {
+                el.checked = false;
+            }
         });
 
-        // Corrigir form-id nos elementos internos
         newForm.innerHTML = newForm.innerHTML.replace(/form-(\d)+/g, 'form-' + currentFormCount);
         container.appendChild(newForm);
         totalForms.value = currentFormCount + 1;
 
-        // Reaplica formatação AutoNumeric ao novo campo
         initAutoNumeric();
     });
 

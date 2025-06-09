@@ -1,68 +1,73 @@
-<div class="card mb-4">
-    <div class="card-header">
-        <h4>Orçamento #{{ budget.id }}</h4>
-    </div>
-    <div class="card-body">
-        <p><strong>Descrição:</strong></p>
-        <p>{{ budget.descricao|linebreaksbr }}</p>
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalhes do Orçamento</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-4">
 
-        <hr>
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Orçamento #{{ orcamento.id }}</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>Descrição:</strong></p>
+            <p>{{ orcamento.descricao|default:"Sem descrição." }}</p>
 
-        <h5>Itens do Orçamento</h5>
-        <table class="table table-bordered mt-3">
-            <thead>
-                <tr>
-                    <th>Serviço / Peça</th>
-                    <th>Categoria</th>
-                    <th>Preço (R$)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in budget.itens.all %}
+            <hr>
+
+            <h5>Itens do Orçamento</h5>
+            <table class="table table-bordered mt-3">
+                <thead>
                     <tr>
-                        <td>{{ item.servico.nome }}</td>
-                        <td>{{ item.servico.category.nome }}</td>
-                        <td>
-                            {% if item.preco_personalizado %}
-                                {{ item.preco_personalizado|floatformat:2 }}
-                            {% else %}
-                                {{ item.servico.preco|floatformat:2 }}
-                            {% endif %}
-                        </td>
+                        <th>Serviço / Peça</th>
+                        <th>Categoria</th>
+                        <th>Preço (R$)</th>
                     </tr>
-                {% empty %}
+                </thead>
+                <tbody>
+                    {% if orcamento.items.all %}
+                        {% for item in orcamento.items.all %}
+                            <tr>
+                                <td>{{ item.nome }}</td>
+                                <td>{{ item.categoria }}</td>
+                                <td>R$ {{ item.preco|floatformat:2 }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="3">Nenhum item foi adicionado a este orçamento.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+                <tfoot>
                     <tr>
-                        <td colspan="3">Nenhum item foi adicionado a este orçamento.</td>
+                    <td colspan="2" class="text-end"><strong>Total</strong></td>
+                    <td><strong>R$ {{ orcamento.total|floatformat:2 }}</strong></td>
                     </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="2" class="text-end">Total</th>
-                    <th>
-                        R$ {{ budget.total|floatformat:2 }}
-                    </th>
-                </tr>
-            </tfoot>
-        </table>
+                </tfoot>
+            </table>
 
-        {% if modo_cliente %}
-            <div class="text-end mt-3">
-                {% if budget.status == 'enviado' %}
-                    <form method="post" action="{% url 'responder_orcamento' budget.id 'aceitar' %}" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-success">Aceitar Orçamento</button>
-                    </form>
-                    <form method="post" action="{% url 'responder_orcamento' budget.id 'recusar' %}" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Recusar Orçamento</button>
-                    </form>
-                {% else %}
-                    <div class="alert alert-info">
-                        Este orçamento foi <strong>{{ budget.get_status_display }}</strong>.
-                    </div>
-                {% endif %}
-            </div>
-        {% endif %}
+            {% if eh_cliente and orcamento.status == 'Enviado' %}
+    <div class="mt-4 d-flex gap-3">
+        <form method="post" action="{% url 'responder_orcamento' orcamento.id 'aceitar' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success">Aceitar</button>
+        </form>
+        <form method="post" action="{% url 'responder_orcamento' orcamento.id 'recusar' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Recusar</button>
+        </form>
     </div>
-</div>
+{% elif not eh_cliente %}
+    <p class="text-muted mt-3">Você está visualizando este orçamento como mecânico.</p>
+{% endif %}
+
+        </div>
+    </div>
+
+    <a href="{% url 'cliente_home' %}" class="btn btn-secondary">Voltar</a>
+</body>
+</html>

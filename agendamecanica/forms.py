@@ -63,32 +63,17 @@ class VehicleForm(forms.ModelForm):
 class BudgetForm(forms.ModelForm):
     class Meta:
         model = Budget
-        fields = ['descricao', 'total']
+        fields = ['descricao']
         widgets = {
             'descricao': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': 'Descrição geral ou observações do mecânico...'
             }),
-            'total': forms.TextInput(attrs={
-                'class': 'form-control money-input',
-                'placeholder': 'Valor total do orçamento (R$)'
-            }),
         }
         labels = {
             'descricao': 'Descrição',
-            'total': 'Valor Total (R$)',
         }
-
-    def clean_total(self):
-        data = self.cleaned_data['total']
-        if isinstance(data, str):
-            data = data.replace('.', '').replace(',', '.')
-        try:
-            return float(data)
-        except ValueError:
-            raise forms.ValidationError("Digite um valor numérico válido.")
-
 
 class BudgetItemForm(forms.ModelForm):
     class Meta:
@@ -111,7 +96,7 @@ class BudgetItemForm(forms.ModelForm):
     def clean_preco_personalizado(self):
         data = self.cleaned_data.get('preco_personalizado')
         if data in (None, ''):
-            return None
+            raise forms.ValidationError("Este campo é obrigatório.")
         if isinstance(data, str):
             data = data.replace('.', '').replace(',', '.')
         try:
@@ -120,10 +105,9 @@ class BudgetItemForm(forms.ModelForm):
             raise forms.ValidationError("Digite um valor numérico válido.")
 
 
-# FormSet para uso nas views
 BudgetItemFormSet = modelformset_factory(
     BudgetItem,
-    form=BudgetItemForm,
+    fields=('servico', 'preco_personalizado'),
     extra=1,
-    can_delete=True
+    can_delete=True  # IMPORTANTE!
 )

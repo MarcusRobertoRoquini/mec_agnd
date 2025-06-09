@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login
-from .forms import CustomUserCreationForm, EmailAuthenticationForm, MechanicForm, VehicleForm, BudgetForm, BudgetItemForm
+from .forms import CustomUserCreationForm, EmailAuthenticationForm, MechanicForm, VehicleForm, BudgetForm, BudgetItemForm, BudgetItemFormSet
 from .models import Mechanic, Service, ServiceHistory, Budget, Appointment, Vehicle, Category, BudgetItem
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -16,11 +16,17 @@ from .forms import CustomUserCreationForm
 from .utils import gerar_horarios_disponiveis
 from django.http import JsonResponse
 import json
-from django.utils.timezone import make_aware, is_naive
+from django.utils.timezone import make_aware, is_naive, now, timedelta
 from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_datetime
 from django.template.loader import render_to_string
 from django.contrib.auth import logout
+from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import Count
+from django.db import transaction
+from django.http import HttpResponseForbidden
+from django.forms import modelform_factory, modelformset_factory
+from django.forms import formset_factory
 
 def register(request):
     if request.method == 'POST':
@@ -157,10 +163,18 @@ def mecanico_home(request):
         appointment_datetime__date=hoje
     ).select_related('client', 'vehicle', 'service')
 
-    # Orçamentos respondidos
-    orcamentos_respondidos = mechanic.appointments.filter(
-        budget__status__in=['aprovado', 'recusado']
-    ).select_related('budget', 'client', 'service')
+    orcamentos_respondidos = Budget.objects.filter(
+    appointment__mechanic=mechanic,
+    status__in=['Aprovado', 'Recusado']
+    )
+
+    
+    orcamentos_para_execucao = Budget.objects.filter(   
+        status='Aprovado',
+        appointment__mechanic=mechanic
+    ).exclude(
+        appointment__status='concluido'
+    )
 
     # Agendamentos da semana
     agendamentos_semanal = defaultdict(list)
@@ -183,6 +197,7 @@ def mecanico_home(request):
         'historico': historico,
         'semana': semana,
         'hoje': hoje.strftime('%d/%m/%Y'),
+        'orcamentos_para_execucao': orcamentos_para_execucao,
     }
 
     return render(request, 'mechome.html', context)
@@ -362,91 +377,105 @@ def atualizar_status(request, agendamento_id, novo_status):
 def criar_orcamento(request, appointment_id):
     appointment = get_object_or_404(Appointment, id=appointment_id)
 
-    if not hasattr(request.user, 'mechanic') or appointment.mechanic != request.user.mechanic:
-        messages.error(request, "Você não tem permissão para criar orçamento para este agendamento.")
-        return redirect('mecanico_home')
-
-    BudgetItemFormSet = modelformset_factory(BudgetItem, form=BudgetItemForm, extra=1, can_delete=True)
-
     if request.method == 'POST':
         form = BudgetForm(request.POST)
-        formset = BudgetItemFormSet(request.POST, queryset=BudgetItem.objects.none())
+        formset = BudgetItemFormSet(request.POST)
 
         if form.is_valid() and formset.is_valid():
-            budget = form.save(commit=False)
-            budget.appointment = appointment
-            budget.status = 'enviado'
-            budget.save()  # total será calculado automaticamente
+            orcamento = form.save(commit=False)
+            orcamento.mecanico = request.user.mechanic
+            orcamento.client = appointment.client
+            orcamento.appointment = appointment
+            orcamento.total = 0
+            orcamento.save()
 
-            for item_form in formset:
-                if item_form.cleaned_data and not item_form.cleaned_data.get('DELETE'):
-                    item = item_form.save(commit=False)
-                    item.budget = budget
-                    item.save()
+            formset.instance = orcamento
+            items = formset.save(commit=False)
 
-            messages.success(request, "Orçamento criado e enviado ao cliente.")
-            return redirect('mecanico_home')  # ou `ver_agendamento` se desejar
+            total = 0
+            for item in items:
+                preco = item.preco_personalizado
+                if isinstance(preco, str):
+                    preco = preco.replace('.', '').replace(',', '.')
+                    preco = float(preco)
+                total += preco
+                item.budget = orcamento  # <- CORRIGIDO aqui
+                item.save()
 
+            orcamento.total = total
+            orcamento.save()
+
+            for item in formset.deleted_objects:
+                item.delete()
+
+            messages.success(request, "Orçamento criado e enviado com sucesso.")
+            return redirect('mecanico_home')
         else:
-            messages.error(request, "Há erros no formulário. Verifique os campos.")
-
+            messages.error(request, "Erro ao criar o orçamento. Verifique os campos.")
     else:
         form = BudgetForm()
         formset = BudgetItemFormSet(queryset=BudgetItem.objects.none())
 
-    return render(request, 'criar_orcamento.html', {
+    context = {
         'form': form,
         'formset': formset,
         'appointment': appointment
-    })
-
+    }
+    return render(request, 'criar_orcamento.html', context)
 
 @login_required
 def ver_orcamento(request, appointment_id):
     appointment = get_object_or_404(Appointment, id=appointment_id)
 
-    # Verifica se o usuário tem permissão
-    if request.user != appointment.client and not (
-        hasattr(request.user, 'mechanic') and request.user.mechanic == appointment.mechanic
-    ):
-        return JsonResponse({'html': '<p>Acesso não autorizado.</p>'}, status=403)
+    is_cliente = request.user.id == appointment.client.id
+    is_mecanico = hasattr(request.user, 'mechanic') and request.user.mechanic.id == appointment.mechanic.id
+
+    if not (is_cliente or is_mecanico):
+        return HttpResponseForbidden("Acesso não autorizado.")
 
     if hasattr(appointment, 'budget'):
         budget = appointment.budget
-        html = render_to_string('partials/orcamento_detalhado.html', {
+        return render(request, 'partials/orcamento_detalhado.html', {
             'orcamento': budget,
-        }, request=request)
-        return JsonResponse({'html': html})
+            'eh_cliente': is_cliente,
+        })
     else:
-        return JsonResponse({'html': '<p>Orçamento ainda não disponível.</p>'})
+        messages.warning(request, "Orçamento ainda não disponível.")
+        return redirect('cliente_home')
+
 
 
 @require_POST
 @login_required
-def responder_orcamento(request, appointment_id, acao):
-    appointment = get_object_or_404(Appointment, id=appointment_id)
-    budget = get_object_or_404(Budget, appointment=appointment)
+def responder_orcamento(request, budget_id, acao):
+    budget = get_object_or_404(Budget, id=budget_id)
+    appointment = budget.appointment
 
-    if request.user != appointment.client.user:
+    if request.user != appointment.client:
         messages.error(request, "Você não tem permissão para responder esse orçamento.")
         return redirect('cliente_home')
 
-    if budget.status != 'enviado':
+    if budget.status != 'Enviado':
         messages.warning(request, "Este orçamento já foi respondido.")
-        return redirect('orcamento_detalhado', appointment_id=appointment.id)
+        return redirect('cliente_home')
 
     if acao == 'aceitar':
-        budget.status = 'aceito'
+        budget.status = 'Aprovado'
+        appointment.status = 'concluido'  # Finaliza o agendamento original
         messages.success(request, "Você aceitou o orçamento.")
     elif acao == 'recusar':
-        budget.status = 'recusado'
+        budget.status = 'Recusado'
+        appointment.status = 'concluido'  # Também finaliza se recusado
         messages.success(request, "Você recusou o orçamento.")
     else:
         messages.error(request, "Ação inválida.")
-        return redirect('orcamento_detalhado', appointment_id=appointment.id)
+        return redirect('cliente_home')
 
     budget.save()
+    appointment.save()
     return redirect('cliente_home')
+
+
 
 @login_required
 def historico_cliente(request):
@@ -459,4 +488,85 @@ def historico_cliente(request):
 
     return render(request, 'historico_cliente.html', {
         'historicos': historicos
+    })
+
+
+@staff_member_required
+def relatorios_admin(request):
+    periodo = request.GET.get('periodo', 'mes')  # semana ou mes
+
+    # Define o intervalo de datas
+    if periodo == 'semana':
+        data_inicio = now() - timedelta(days=7)
+    else:
+        data_inicio = now() - timedelta(days=30)
+
+    # Filtra agendamentos no período
+    agendamentos = Appointment.objects.filter(appointment_datetime__gte=data_inicio)
+
+    # Total de agendamentos por mecânico
+    agendamentos_por_mecanico = agendamentos.values(
+        'mechanic__user__first_name', 'mechanic__user__last_name'
+    ).annotate(total=Count('id')).order_by('-total')
+
+    # Serviços mais solicitados
+    servicos_mais_solicitados = Service.objects.annotate(
+        total=Count('appointments')
+    ).order_by('-total')[:10]
+
+    return render(request, 'relatorios_admin.html', {
+        'periodo': periodo,
+        'agendamentos_por_mecanico': agendamentos_por_mecanico,
+        'servicos_mais_solicitados': servicos_mais_solicitados,
+    })
+
+# views.py
+def agendar_execucao(request, orcamento_id):
+    orcamento = get_object_or_404(Budget, id=orcamento_id)
+    itens = orcamento.itens.all()  # pegar todos os itens do orçamento
+
+    if request.method == 'POST':
+        data = request.POST.get('data')
+        hora = request.POST.get('hora')
+        datetime_execucao = datetime.strptime(f"{data} {hora}", "%Y-%m-%d %H:%M")
+
+        # cria novo agendamento de execução
+        novo_agendamento = Appointment.objects.create(
+            client=orcamento.appointment.client,
+            mechanic=orcamento.appointment.mechanic,
+            appointment_datetime=datetime_execucao,
+            status='pendente'
+        )
+
+        # para cada item no orçamento, associar ao agendamento
+        for item in itens:
+            novo_agendamento.service.add(item.service)  # se `service` for ManyToMany
+            # ou se for apenas um campo service normal: criar um agendamento por item (não recomendado)
+
+        novo_agendamento.save()
+
+        return redirect('mecanico_home')
+
+    return render(request, 'agendar_execucao.html', {
+        'orcamento': orcamento,
+        'itens': itens,
+    })
+
+@login_required
+def finalizar_agendamento(request, appointment_id):
+    agendamento = get_object_or_404(Appointment, id=appointment_id)
+
+    if request.method == 'POST':
+        valor = request.POST.get('valor')
+        try:
+            agendamento.valor_cobrado = float(valor)
+            agendamento.status = 'concluido'
+            agendamento.save()
+            messages.success(request, "Agendamento finalizado com sucesso.")
+        except ValueError:
+            messages.error(request, "Valor inválido.")
+        return redirect('mecanico_home')
+
+    return render(request, 'finalizar_agendamento.html', {
+        'agendamento': agendamento
     })

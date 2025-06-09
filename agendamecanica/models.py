@@ -6,6 +6,7 @@ import datetime
 from datetime import timedelta
 from django.contrib.postgres.fields import ArrayField
 from django.db.models import JSONField
+from django.template.loader import render_to_string
 
 class User(AbstractUser):
     email = models.EmailField('email address', unique=True)
@@ -113,6 +114,8 @@ class Appointment(models.Model):
         ('concluido', 'Concluído'),
     ]
 
+    valor_cobrado = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
     client = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -155,10 +158,11 @@ class Appointment(models.Model):
 
 class Budget(models.Model):
     STATUS_CHOICES = [
-        ('enviado', 'Enviado'),
-        ('aprovado', 'Aprovado'),
-        ('recusado', 'Recusado'),
+        ('Enviado', 'Enviado'),
+        ('Aprovado', 'Aprovado'),
+        ('Recusado', 'Recusado'),
     ]
+    agendamento_executado = models.BooleanField(default=False)
 
     appointment = models.OneToOneField(
         'Appointment',
@@ -196,36 +200,30 @@ class Budget(models.Model):
     def total_estimado(self):
         return self.calcular_total()
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.total = self.calcular_total()
-        super().save(update_fields=["total"])
-
     class Meta:
         db_table = 'orcamentos'
         ordering = ['-criado_em']
 
 
 class BudgetItem(models.Model):
-    budget = models.ForeignKey(
-        'Budget',
-        on_delete=models.CASCADE,
-        related_name='itens'
-    )
-    servico = models.ForeignKey(
-        'Service',
-        on_delete=models.RESTRICT,
-        related_name='budget_items'
-    )
-    preco_personalizado = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(0)]
-    )
+    budget = models.ForeignKey(Budget, on_delete=models.CASCADE, related_name="items")
+    servico = models.ForeignKey(Service, on_delete=models.PROTECT)  # Pode ser PROTECT ou CASCADE
+    preco_personalizado = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
-        return f"{self.servico.nome} - R${{self.preco_personalizado}}"
+        return f"{self.servico.nome} - R$ {self.preco_personalizado}"
 
+    @property
+    def nome(self):
+        return self.servico.nome
+
+    @property
+    def categoria(self):
+        return self.servico.categoria.nome if self.servico.categoria else "Sem categoria"
+
+    @property
+    def preco(self):
+        return self.preco_personalizado
 class ServiceHistory(models.Model):
     appointment = models.OneToOneField(
         'Appointment',
@@ -267,3 +265,14 @@ class ServiceHistory(models.Model):
         db_table = 'historico_servicos'
         ordering = ['-data_realizacao']
  
+class Cliente(User):
+    class Meta:
+        proxy = True
+        verbose_name = 'Cliente'
+        verbose_name_plural = 'Clientes'
+
+class RelatorioDummy(models.Model):
+    class Meta:
+        verbose_name = "Relatórios"
+        verbose_name_plural = "Relatórios"
+        managed = False  # evita criação de tabela

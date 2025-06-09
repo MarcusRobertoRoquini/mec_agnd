@@ -67,24 +67,27 @@
     </section>
 
     <!-- Seção Orçamentos -->
-    <section class="section mb-4">
-        <h2>Orçamentos Recebidos</h2>
-        {% if orcamentos %}
-            <ul class="list-group">
-                {% for o in orcamentos %}
-                    <li class="list-group-item">
-                        <strong>{{ o.appointment.service.nome }}</strong> em {{ o.appointment.appointment_datetime|date:"d/m/Y" }}<br>
-                        Valor: R$ {{ o.total }} <span class="badge bg-secondary">{{ o.get_status_display }}</span>
-                        {% if o.descricao %}
-                            <p class="mt-1">{{ o.descricao }}</p>
-                        {% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-muted">Nenhum orçamento disponível ainda.</p>
-        {% endif %}
-    </section>
+<section class="section mb-4">
+    <h2>Orçamentos Recebidos</h2>
+    {% if orcamentos %}
+        <ul class="list-group">
+            {% for o in orcamentos %}
+                <li class="list-group-item">
+                    <strong>{{ o.appointment.service.nome }}</strong> em {{ o.appointment.appointment_datetime|date:"d/m/Y" }}<br>
+                    Valor: R$ {{ o.total }} <span class="badge bg-secondary">{{ o.get_status_display }}</span>
+                    {% if o.descricao %}
+                        <p class="mt-1">{{ o.descricao }}</p>
+                    {% endif %}
+                    <a href="{% url 'orcamento_detalhado' o.appointment.id %}" class="btn btn-sm btn-primary mt-2">Ver Detalhes</a>
+
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">Nenhum orçamento disponível ainda.</p>
+    {% endif %}
+</section>
+
 
     <!-- Seção Histórico de Serviços -->
     <section class="section mb-4">

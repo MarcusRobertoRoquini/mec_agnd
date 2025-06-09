@@ -58,7 +58,7 @@
                         {% if ag.status == 'pendente' %}
                             | <a href="{% url 'atualizar_status' ag.id 'em_analise' %}">Marcar como Em Análise</a>
                         {% elif ag.status == 'em_analise' %}
-                            | <a href="{% url 'atualizar_status' ag.id 'concluido' %}">Concluir</a>
+                            | <a href="{% url 'finalizar_agendamento' ag.id %}">Concluir</a>
                             | <a href="{% url 'criar_orcamento' ag.id %}">Criar Orçamento</a>
                         {% endif %}
                     </li>
@@ -98,8 +98,8 @@
                     <li>
                         {{ s.data_realizacao|date:"d/m/Y" }} -
                         {{ s.vehicle.placa }} -
-                        {{ s.service.nome }} -
-                        R$ {{ s.valor_cobrado }}
+                        {{ s.service.nome }} 
+                        
                     </li>
                 {% empty %}
                     <li>Você ainda não realizou serviços registrados.</li>
@@ -121,6 +121,22 @@
                     <li>Nenhum orçamento respondido ainda.</li>
                 {% endfor %}
             </ul>
+        </section>
+        <!-- Orçamentos Aprovados para Execução -->
+        <section class="card">
+            <h2>Agendar Execução de Orçamento Aprovado</h2>
+            <ul>
+                {% for orc in orcamentos_para_execucao %}
+                        <li>
+                            {{ orc.appointment.client.get_full_name }} -
+                            {{ orc.appointment.vehicle.placa }} -
+                            Serviço: {{ orc.appointment.service.nome }}<br>
+                        <a href="{% url 'agendar_execucao' orc.id %}" class="btn btn-primary btn-sm mt-1">Criar Agendamento de Execução</a>
+                        </li>
+                {% empty %}
+                    <li>Nenhum orçamento aguardando execução.</li>
+        {% endfor %}
+    </ul>
         </section>
  
     </div>

@@ -1,0 +1,56 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block title %}Relatórios Administrativos{% endblock %}
+
+{% block content %}
+<h1>Relatórios Administrativos</h1>
+
+<form method="get" style="margin-bottom: 20px;">
+    <label for="periodo">Período:</label>
+    <select name="periodo" id="periodo" onchange="this.form.submit()">
+        <option value="semana" {% if periodo == 'semana' %}selected{% endif %}>Última semana</option>
+        <option value="mes" {% if periodo == 'mes' %}selected{% endif %}>Último mês</option>
+    </select>
+</form>
+
+<h2>Total de Agendamentos por Mecânico</h2>
+<table class="admin-table">
+    <thead>
+        <tr>
+            <th>Mecânico</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in agendamentos_por_mecanico %}
+        <tr>
+            <td>{{ item.mechanic__user__first_name }} {{ item.mechanic__user__last_name }}</td>
+            <td>{{ item.total }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="2">Nenhum agendamento encontrado.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Serviços Mais Solicitados</h2>
+<table class="admin-table">
+    <thead>
+        <tr>
+            <th>Serviço</th>
+            <th>Solicitações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in servicos_mais_solicitados %}
+        <tr>
+            <td>{{ s.nome }}</td>
+            <td>{{ s.total }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="2">Nenhum serviço encontrado.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

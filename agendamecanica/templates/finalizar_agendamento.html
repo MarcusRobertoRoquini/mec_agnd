@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Finalizar Agendamento</h2>
+<form method="post">
+  {% csrf_token %}
+  <p>Confirme o valor cobrado ao cliente:</p>
+  <input type="number" name="valor" step="0.01" required>
+  <button type="submit">Finalizar Agendamento</button>
+</form>
+{% endblock %}

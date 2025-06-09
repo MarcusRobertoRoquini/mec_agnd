@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Agendar Execução do Orçamento</h2>
+<p>Cliente: {{ budget.appointment.client.get_full_name }}</p>
+<p>Veículo: {{ budget.appointment.vehicle.placa }}</p>
+<p>Serviço: {{ budget.appointment.service.nome }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    <label for="data">Data:</label>
+    <input type="date" name="data" required><br>
+    <label for="hora">Hora:</label>
+    <input type="time" name="hora" required><br><br>
+    <button type="submit" class="btn btn-success">Agendar Execução</button>
+</form>
+<a href="{% url 'mecanico_home' %}" class="btn btn-secondary mt-3">Cancelar</a>
+{% endblock %}
