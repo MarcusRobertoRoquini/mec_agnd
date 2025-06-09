@@ -50,7 +50,7 @@
                 </tfoot>
             </table>
 
-            {% if eh_cliente and orcamento.status == 'Enviado' %}
+            {% if eh_cliente and orcamento.status == 'enviado' %}
     <div class="mt-4 d-flex gap-3">
         <form method="post" action="{% url 'responder_orcamento' orcamento.id 'aceitar' %}">
             {% csrf_token %}

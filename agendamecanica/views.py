@@ -461,18 +461,15 @@ def responder_orcamento(request, budget_id, acao):
 
     if acao == 'aceitar':
         budget.status = 'Aprovado'
-        appointment.status = 'concluido'  # Finaliza o agendamento original
         messages.success(request, "Você aceitou o orçamento.")
     elif acao == 'recusar':
         budget.status = 'Recusado'
-        appointment.status = 'concluido'  # Também finaliza se recusado
         messages.success(request, "Você recusou o orçamento.")
     else:
         messages.error(request, "Ação inválida.")
         return redirect('cliente_home')
 
     budget.save()
-    appointment.save()
     return redirect('cliente_home')
 
 

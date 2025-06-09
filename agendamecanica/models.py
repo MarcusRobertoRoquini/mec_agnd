@@ -186,7 +186,7 @@ class Budget(models.Model):
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='enviado'
+        default='Enviado'
     )
     criado_em = models.DateTimeField(auto_now_add=True)
 
